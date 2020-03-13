@@ -1,0 +1,21 @@
+{
+  "name": "jtree-typescript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "jtree-typescript": "BayesianNetwork.js"
+  },
+  "dependencies": {
+    "nodemon": "^2.0.2",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "nodemon"
+  },
+  "author": "",
+  "license": "ISC"
+}
