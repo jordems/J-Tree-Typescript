@@ -1,17 +1,25 @@
-export default class EntityDependant {
-  private entity: string;
-  private dependants: Array<string>;
+import IEntity from "./IEntity";
 
-  constructor(entity: string, dependants: Array<string>) {
+export default class EntityDependant {
+  private entity: IEntity;
+  private dependants: Array<IEntity>;
+
+  constructor(entity: IEntity, dependants: Array<IEntity> | IEntity) {
     this.entity = entity;
-    this.dependants = dependants;
+
+    // Allow passing single dependant
+    if (Array.isArray(dependants)) {
+      this.dependants = dependants;
+    } else {
+      this.dependants = [dependants];
+    }
   }
 
-  public getEntity(): string {
+  public getEntity(): IEntity {
     return this.entity;
   }
 
-  public getDependants(): Array<string> {
+  public getDependants(): Array<IEntity> {
     return this.dependants;
   }
 }

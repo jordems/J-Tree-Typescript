@@ -2,7 +2,7 @@ import EntityDependant from "./EntityDependant";
 
 export default class Dag {
   private matrix: number[][];
-  private entityLabelPairs: { [entity: string]: number };
+  private entityLabelPairs: { [entityname: string]: number };
   private numPairs = 0;
   /**
    *
@@ -28,14 +28,14 @@ export default class Dag {
       const entity = entRel.getEntity();
       const dependants = entRel.getDependants();
 
-      if (!(entity in entityLabelPairs)) {
-        entityLabelPairs[entity] = idxCount;
+      if (!(entity.name in entityLabelPairs)) {
+        entityLabelPairs[entity.name] = idxCount;
         idxCount++;
       }
 
       dependants.forEach(dep => {
-        if (!(dep in entityLabelPairs)) {
-          entityLabelPairs[dep] = idxCount;
+        if (!(dep.name in entityLabelPairs)) {
+          entityLabelPairs[dep.name] = idxCount;
           idxCount++;
         }
       });
@@ -45,16 +45,16 @@ export default class Dag {
   }
 
   private buildMatrix(entityRelationships: EntityDependant[]): number[][] {
-    let matrix: number[][] = Array(this.numPairs)
+    let matrix: number[][] = new Array(this.numPairs)
       .fill(0)
-      .map(() => Array(this.numPairs).fill(0));
+      .map(() => new Array(this.numPairs).fill(0));
 
     entityRelationships.forEach(entRel => {
-      const entityidx = this.entityLabelPairs[entRel.getEntity()];
+      const entityidx = this.entityLabelPairs[entRel.getEntity().name];
       const dependants = entRel.getDependants();
 
       dependants.forEach(dep => {
-        const depidx = this.entityLabelPairs[dep];
+        const depidx = this.entityLabelPairs[dep.name];
         matrix[entityidx][depidx] = 1;
       });
     });
