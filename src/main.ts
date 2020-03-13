@@ -35,9 +35,10 @@ console.log(dag.getMatrix());
 
 const cptBuilder = new CPTBuilder();
 
-const CPTA = cptBuilder.buildCPT(new EntityDependant(entityB, [entityC]));
-console.log(CPTA);
 cptBuilder.buildCPTsForMap(entityMap, entityRelationships);
-console.log(entityMap);
 
-const bnet = new BayesianNetwork(dag);
+entityMap.forEach(entity => {
+  console.log(JSON.stringify(entity, null, "  "));
+});
+
+//const bnet = new BayesianNetwork(dag);
