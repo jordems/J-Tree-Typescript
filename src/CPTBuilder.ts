@@ -1,17 +1,12 @@
 import IEntity from "./IEntity";
-import EntityDependant from "./EntityDependant";
 import { ICPT, DependancyContitions, StateProbabilities } from "./ICPT";
 
 export class CPTBuilder {
-  public buildCPTsForMap(
-    entityMap: Map<string, IEntity>,
-    entityRelationships: EntityDependant[]
-  ): void {
-    entityRelationships.forEach(entityDependant => {
-      const cpt = this.buildCPT(entityDependant);
-      const currentEntity = entityDependant.getEntity();
+  public buildCPTsForMap(entityMap: Map<string, IEntity>): void {
+    entityMap.forEach(entity => {
+      const cpt = this.buildCPT(entity);
 
-      const mapEntity = entityMap.get(currentEntity.name);
+      const mapEntity = entityMap.get(entity.name);
       if (mapEntity) {
         mapEntity.cpt = cpt;
         entityMap.set(mapEntity.name, mapEntity);
@@ -22,12 +17,12 @@ export class CPTBuilder {
   /**
    * TODO Currently only works for 1 or 2 Dependants
    */
-  public buildCPT(entityDependant: EntityDependant): ICPT {
-    const entityStates = entityDependant.getEntity().states;
-    const entityDependants = entityDependant.getDependants();
+  public buildCPT(entity: IEntity): ICPT {
+    const entityStates = entity.states;
+
     let CPT: ICPT = [];
-    if (entityDependants.length === 1) {
-      const singleDependant = entityDependants[0];
+    if (entity.deps && entity.deps.length === 1) {
+      const singleDependant = entity.deps[0];
       for (var i = 0; i < singleDependant.states.length; i++) {
         // Build Dependancy Conditions
         const depConditions: DependancyContitions = {
@@ -46,12 +41,12 @@ export class CPTBuilder {
           then: stateprobs
         });
       }
-    } else if (entityDependants.length > 1) {
+    } else if (entity.deps && entity.deps.length > 1) {
       // Build Dependancy Pairs
       let depPairs: Array<[IEntity, IEntity]> = [];
-      for (var i = 0; i < entityDependants.length - 1; i++) {
-        for (var j = i; j < entityDependants.length - 1; j++) {
-          depPairs.push([entityDependants[i], entityDependants[j + 1]]);
+      for (var i = 0; i < entity.deps.length - 1; i++) {
+        for (var j = i; j < entity.deps.length - 1; j++) {
+          depPairs.push([entity.deps[i], entity.deps[j + 1]]);
         }
       }
 

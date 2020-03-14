@@ -1,62 +1,43 @@
-import EntityDependant from "./EntityDependant";
+import IEntity from "./IEntity";
 
 export default class Dag {
   private matrix: number[][];
-  private entityLabelPairs: { [entityname: string]: number };
-  private numPairs = 0;
+  private idxLabels: { [entityname: string]: number };
+
   /**
    *
-   * @param entityRelationships Contains all entity relationships to build DAG
-   *
-   * @example
-   * const entityRelationships = [{'a': ['b', 'c']},{'b':['d']}, {'c':['d']}, {'d': ['e']}];
-   * const dag = new Dag(entityRelationships);
    */
-  constructor(entityRelationships: EntityDependant[]) {
-    this.entityLabelPairs = this.assignLabels(entityRelationships);
-    this.matrix = this.buildMatrix(entityRelationships);
+  constructor(entityMap: Map<string, IEntity>) {
+    this.idxLabels = this.generateIdxes(entityMap);
+    this.matrix = this.buildMatrix(entityMap);
   }
 
-  private assignLabels(
-    entityRelationships: EntityDependant[]
-  ): { [entity: string]: number } {
-    // Find all seperate Entities and assign a number
+  private generateIdxes(
+    entityMap: Map<string, IEntity>
+  ): { [entityname: string]: number } {
+    let idxLabels: { [entityname: string]: number } = {};
     let idxCount = 0;
-    let entityLabelPairs: { [entity: string]: number } = {};
-
-    entityRelationships.forEach(entRel => {
-      const entity = entRel.getEntity();
-      const dependants = entRel.getDependants();
-
-      if (!(entity.name in entityLabelPairs)) {
-        entityLabelPairs[entity.name] = idxCount;
-        idxCount++;
-      }
-
-      dependants.forEach(dep => {
-        if (!(dep.name in entityLabelPairs)) {
-          entityLabelPairs[dep.name] = idxCount;
-          idxCount++;
-        }
-      });
+    entityMap.forEach((_entity, key) => {
+      idxLabels[key] = idxCount;
+      idxCount++;
     });
-    this.numPairs = idxCount;
-    return entityLabelPairs;
+    return idxLabels;
   }
 
-  private buildMatrix(entityRelationships: EntityDependant[]): number[][] {
-    let matrix: number[][] = new Array(this.numPairs)
+  private buildMatrix(entityMap: Map<string, IEntity>): number[][] {
+    let matrix: number[][] = new Array(entityMap.size)
       .fill(0)
-      .map(() => new Array(this.numPairs).fill(0));
+      .map(() => new Array(entityMap.size).fill(0));
+    entityMap.forEach(entity => {
+      const entityidx = this.idxLabels[entity.name];
 
-    entityRelationships.forEach(entRel => {
-      const entityidx = this.entityLabelPairs[entRel.getEntity().name];
-      const dependants = entRel.getDependants();
-
-      dependants.forEach(dep => {
-        const depidx = this.entityLabelPairs[dep.name];
-        matrix[entityidx][depidx] = 1;
-      });
+      if (entity.deps) {
+        entity.deps.forEach(dep => {
+          const depidx = this.idxLabels[dep.name];
+          matrix[entityidx][depidx] = 1;
+        });
+      } else {
+      }
     });
 
     return matrix;
