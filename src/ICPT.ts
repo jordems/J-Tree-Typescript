@@ -1,4 +1,4 @@
-export type ICPT = Array<CPTCondition>;
+export type ICPT = CPTCondition[];
 
 export interface CPTCondition {
   if: DependancyContitions;

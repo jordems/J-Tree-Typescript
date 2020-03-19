@@ -2,6 +2,7 @@ import IEntity from "./IEntity";
 import Dag from "./Dag";
 import BayesianNetwork from "./BayesianNetwork";
 import { CPTBuilder } from "./CPTBuilder";
+import JunctionTree from "./JunctionTree";
 
 // Create all Test Entities
 let entityA: IEntity = { name: "A", states: ["low", "high"] };
@@ -37,3 +38,5 @@ cptBuilder.buildCPTsForMap(entityMap);
 console.log(entityMap);
 
 const bnet = new BayesianNetwork(entityMap, dag);
+
+const jtree = new JunctionTree(bnet);

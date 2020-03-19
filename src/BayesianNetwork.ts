@@ -9,4 +9,12 @@ export default class BayesianNetwork {
     this.entityMap = entityMap;
     this.dag = dag;
   }
+
+  public getDag(): Dag {
+    return this.dag;
+  }
+
+  public getEntityMap(): Map<string, IEntity> {
+    return this.entityMap;
+  }
 }

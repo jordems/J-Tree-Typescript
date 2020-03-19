@@ -43,7 +43,11 @@ export default class Dag {
     return matrix;
   }
 
-  public getMatrix() {
+  public getMatrix(): number[][] {
     return this.matrix;
+  }
+
+  public getLabels(): { [entityname: string]: number } {
+    return this.idxLabels;
   }
 }
