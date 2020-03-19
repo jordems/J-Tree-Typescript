@@ -3,25 +3,29 @@ import IEntity from "./IEntity";
 export default class Dag {
   private matrix: number[][];
   private idxLabels: { [entityname: string]: number };
+  private labelIdxs: { [idx: number]: string };
 
   /**
    *
    */
   constructor(entityMap: Map<string, IEntity>) {
-    this.idxLabels = this.generateIdxes(entityMap);
+    [this.idxLabels, this.labelIdxs] = this.generateIdxes(entityMap);
+
     this.matrix = this.buildMatrix(entityMap);
   }
 
   private generateIdxes(
     entityMap: Map<string, IEntity>
-  ): { [entityname: string]: number } {
+  ): [{ [entityname: string]: number }, { [idx: number]: string }] {
     let idxLabels: { [entityname: string]: number } = {};
+    let labelIdxs: { [idx: number]: string } = {};
     let idxCount = 0;
     entityMap.forEach((_entity, key) => {
       idxLabels[key] = idxCount;
+      labelIdxs[idxCount] = key;
       idxCount++;
     });
-    return idxLabels;
+    return [idxLabels, labelIdxs];
   }
 
   private buildMatrix(entityMap: Map<string, IEntity>): number[][] {
@@ -47,7 +51,10 @@ export default class Dag {
     return this.matrix;
   }
 
-  public getLabels(): { [entityname: string]: number } {
-    return this.idxLabels;
+  public getLabelbyIdx(idx: number): string {
+    return this.labelIdxs[idx];
+  }
+  public getIdxbyLabel(label: string): number {
+    return this.idxLabels[label];
   }
 }

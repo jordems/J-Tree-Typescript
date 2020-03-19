@@ -3,8 +3,12 @@ import { ICPT, DependancyContitions, StateProbabilities } from "./ICPT";
 
 export class CPTBuilder {
   public buildCPTsForMap(entityMap: Map<string, IEntity>): void {
+    const entityParentsMap = this.getParents(entityMap);
+
     entityMap.forEach(entity => {
-      const cpt = this.buildCPT(entity);
+      const entityParents = entityParentsMap[entity.name];
+
+      const cpt = this.buildCPT(entity, entityParents);
 
       const mapEntity = entityMap.get(entity.name);
       if (mapEntity) {
@@ -17,12 +21,12 @@ export class CPTBuilder {
   /**
    * TODO Currently only works for 1 or 2 Dependants
    */
-  public buildCPT(entity: IEntity): ICPT {
+  public buildCPT(entity: IEntity, entityParents: IEntity[]): ICPT {
     const entityStates = entity.states;
 
     let CPT: ICPT = [];
-    if (entity.deps && entity.deps.length === 1) {
-      const singleDependant = entity.deps[0];
+    if (entityParents && entityParents.length === 1) {
+      const singleDependant = entityParents[0];
       for (var i = 0; i < singleDependant.states.length; i++) {
         // Build Dependancy Conditions
         const depConditions: DependancyContitions = {
@@ -41,12 +45,12 @@ export class CPTBuilder {
           then: stateprobs
         });
       }
-    } else if (entity.deps && entity.deps.length > 1) {
+    } else if (entityParents && entityParents.length > 1) {
       // Build Dependancy Pairs
       let depPairs: Array<[IEntity, IEntity]> = [];
-      for (var i = 0; i < entity.deps.length - 1; i++) {
-        for (var j = i; j < entity.deps.length - 1; j++) {
-          depPairs.push([entity.deps[i], entity.deps[j + 1]]);
+      for (var i = 0; i < entityParents.length - 1; i++) {
+        for (var j = i; j < entityParents.length - 1; j++) {
+          depPairs.push([entityParents[i], entityParents[j + 1]]);
         }
       }
 
@@ -77,5 +81,23 @@ export class CPTBuilder {
     }
 
     return CPT;
+  }
+
+  private getParents(
+    entityMap: Map<string, IEntity>
+  ): { [entityName: string]: IEntity[] } {
+    const entityParents: { [entityName: string]: IEntity[] } = {};
+
+    entityMap.forEach(entity => {
+      if (entity.deps) {
+        entity.deps.forEach(depEntity => {
+          if (!(depEntity.name in entityParents)) {
+            entityParents[depEntity.name] = [];
+          }
+          entityParents[depEntity.name].push(entity);
+        });
+      }
+    });
+    return entityParents;
   }
 }
