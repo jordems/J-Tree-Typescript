@@ -1,4 +1,4 @@
-import IEntity from "./IEntity";
+import IEntity from "./types/IEntity";
 
 export default class Dag {
   private matrix: number[][];
@@ -33,11 +33,11 @@ export default class Dag {
       .fill(0)
       .map(() => new Array(entityMap.size).fill(0));
     entityMap.forEach(entity => {
-      const entityidx = this.idxLabels[entity.name];
+      const entityidx = this.idxLabels[entity.id];
 
       if (entity.deps) {
         entity.deps.forEach(dep => {
-          const depidx = this.idxLabels[dep.name];
+          const depidx = this.idxLabels[dep.id];
           matrix[entityidx][depidx] = 1;
         });
       } else {

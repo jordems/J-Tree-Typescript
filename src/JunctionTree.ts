@@ -1,14 +1,17 @@
-import { cloneDeep } from "lodash";
+import { cloneDeep, intersection, union } from "lodash";
 
 import BayesianNetwork from "./BayesianNetwork";
-import IEntity from "./IEntity";
 import { printMatrix } from "./PrintTools";
+import IClique from "./types/IClique";
+import ISepSet from "./types/ISepSet";
+import IEntity from "./types/IEntity";
 
 export default class JunctionTree {
   private bnet: BayesianNetwork;
   private moralGraph: number[][];
   private triangulatedGraph: number[][];
-  private cliques: string[][];
+  private cliques: IClique[];
+  //private optimizedJunctionTree: number[][];
 
   constructor(bnet: BayesianNetwork) {
     this.bnet = bnet;
@@ -16,11 +19,12 @@ export default class JunctionTree {
 
     [this.triangulatedGraph, this.cliques] = this.buildTriangulatedGraph();
 
-    this.buildJunctionTree();
+    this.buildOptimizedJunctionTree();
   }
 
   /**
    * Builds Moral Graph from the bayes nets Dag
+   * @returns MoralGraph
    */
   private buildMoralGraph(): number[][] {
     const dagMatrix = this.bnet.getDag().getMatrix();
@@ -42,14 +46,14 @@ export default class JunctionTree {
     // Create "Moral arcs"
     // First we must find each of the parents
     const entityMap = this.bnet.getEntityMap();
-    const entityParents: { [entityName: string]: string[] } = {};
+    const entityParents: { [entityID: string]: string[] } = {};
     entityMap.forEach(entity => {
       if (entity.deps) {
         entity.deps.forEach(depEntity => {
-          if (!(depEntity.name in entityParents)) {
-            entityParents[depEntity.name] = [];
+          if (!(depEntity.id in entityParents)) {
+            entityParents[depEntity.id] = [];
           }
-          entityParents[depEntity.name].push(entity.name);
+          entityParents[depEntity.id].push(entity.id);
         });
       }
     });
@@ -78,13 +82,14 @@ export default class JunctionTree {
 
   /**
    * Builds Triangulated Graph from Moral Graph and also finds Cliques
+   * @returns  [TriangulatedGraph, Cliques]
    */
-  private buildTriangulatedGraph(): [number[][], string[][]] {
+  private buildTriangulatedGraph(): [number[][], IClique[]] {
     let moralGraphCopy = cloneDeep(this.moralGraph); // Create Deep Copy of moralGraph
     let triangulatedGraph = cloneDeep(this.moralGraph); // Create Deep Copy of moralGraph
     let moralIdxTracker = Array.from(Array(moralGraphCopy.length).keys()); // Array to keep track of original idxs
 
-    let inducedClusters: string[][] = []; // report induced Clusters for when building Clinques
+    let cliques: IClique[] = []; // report induced Clusters for when building Clinques
 
     const entityMap = this.bnet.getEntityMap();
 
@@ -185,21 +190,29 @@ export default class JunctionTree {
       console.log("cycle");
       //    With the entity V selected
       //    Get its neighbors and, this forms a cluster
+      const labelOfIdxtoRemove = this.bnet
+        .getDag()
+        .getLabelbyIdx(moralIdxTracker[idxToRemove]);
+
       let neighboridxs: number[] = [];
-      let inducedCluster: string[] = [
-        this.bnet.getDag().getLabelbyIdx(moralIdxTracker[idxToRemove])
-      ];
+      let inducedCluster: IClique = {
+        id: labelOfIdxtoRemove,
+        entityIDs: [labelOfIdxtoRemove]
+      };
       for (let x = 0; x < moralGraphCopy[idxToRemove].length; x++) {
         if (moralGraphCopy[idxToRemove][x] === 1) {
           neighboridxs.push(x);
-          inducedCluster.push(
-            this.bnet.getDag().getLabelbyIdx(moralIdxTracker[x])
-          );
+
+          const labelOfInducedClusterNeighbors = this.bnet
+            .getDag()
+            .getLabelbyIdx(moralIdxTracker[x]);
+          inducedCluster.id += labelOfInducedClusterNeighbors;
+          inducedCluster.entityIDs.push(labelOfInducedClusterNeighbors);
         }
       }
 
       // Add to inducedClusters
-      inducedClusters.push(inducedCluster);
+      cliques.push(inducedCluster);
 
       //    Connect all nodes in this cluster, for each new edge added to moralGraphCopy add this edge to the triangulatedGraph
       for (let x = 0; x < neighboridxs.length; x++) {
@@ -226,12 +239,158 @@ export default class JunctionTree {
 
     console.log("triangulatedGraph");
     printMatrix(triangulatedGraph);
-    console.log("inducedClusters", inducedClusters);
-    return [triangulatedGraph, inducedClusters];
+    console.log("inducedClusters", cliques);
+    return [triangulatedGraph, cliques];
   }
 
   /**
    * Using Cliques from Graph Triangulation Builds Optimized Join Tree
+   * @returns OptimizedJunctionTree
    */
-  private buildJunctionTree(): void {}
+  private buildOptimizedJunctionTree(): void {
+    const { cliques } = this;
+    const entityMap = this.bnet.getEntityMap();
+
+    // Begin with a set of n trees, each consisting of a single clique, and an empty set cliqueTree
+    let cliqueTree: { [cliqueID: string]: { [cliqueID: string]: number } } = {};
+    let Petha: ISepSet[] = [];
+
+    // For each distinct pair of cliques X and Y:
+    //  a) create a candidate sepset, Labeled X intersection B with backpointers to the cliques X and Y. Refer to this sepset as S(XY)
+    //  b) Insert S(XY) into Petha
+    // Repeat until n-1 sepsets have been inserted into the forest
+    for (let x = 0; x < cliques.length; x++) {
+      for (let y = 0; y < cliques.length; y++) {
+        // Init Object
+        if (!(cliques[x].id in cliqueTree)) {
+          cliqueTree[cliques[x].id] = {};
+        }
+        if (!(cliques[y].id in cliqueTree[cliques[x].id])) {
+          cliqueTree[cliques[x].id][cliques[y].id] = 0;
+        }
+
+        if (x !== y) {
+          // Find intersecting Entities Between cliques X and Y
+          let intersectingentityIDs: string[] = [];
+          for (let z = 0; z < cliques[y].entityIDs.length; z++) {
+            if (cliques[x].entityIDs.includes(cliques[y].entityIDs[z])) {
+              intersectingentityIDs.push(cliques[y].entityIDs[z]);
+            }
+          }
+
+          if (intersectingentityIDs.length > 0) {
+            cliqueTree[cliques[x].id][cliques[y].id] = 1;
+
+            // Makes Petha Distinct
+            if (
+              !(
+                cliques[y].id in cliqueTree &&
+                cliques[x].id in cliqueTree[cliques[y].id] &&
+                cliqueTree[cliques[y].id][cliques[x].id] === 1
+              )
+            ) {
+              Petha.push({
+                cliqueAID: cliques[x].id,
+                cliqueBID: cliques[y].id,
+                intersectingentityIDs: intersectingentityIDs
+              });
+            }
+          }
+        }
+      }
+    }
+    console.log(cliqueTree);
+    console.log(Petha);
+
+    const nextFromPetha = (
+      Petha: ISepSet[],
+      cliques: IClique[],
+      entityMap: Map<string, IEntity>
+    ): ISepSet => {
+      //   a) Select a sepset S(xy) from Petha, according to the criterion specified in section 4.42. Delete S(xy) from Petha
+      //    4.42 Mass and Cost
+      //      Mass: of a sepset S(xy) is the number of variables it contains or number of variables in X intersection Y
+
+      // Choose Sepsets with smalls number of intersecting Entities
+      let maxMass = 0;
+      let possibleSepSets: ISepSet[] = [];
+      for (let x = 0; x < Petha.length; x++) {
+        const nIntersections = Petha[x].intersectingentityIDs.length;
+        if (nIntersections > maxMass) {
+          maxMass = nIntersections;
+          possibleSepSets = [Petha[x]];
+        } else if (nIntersections === maxMass) {
+          possibleSepSets.push(Petha[x]);
+        }
+      }
+      //console.log("PossibleSubseds", possibleSepSets);
+
+      //      Cost: of a sepset S(xy) is the weight of X Plus the weight of Y, where weight is defined as follows:
+      //          The weight of a variable V is the number of values of V
+      //          The weight of a set of variables X is the product of weights of the variables in X
+      //     When selecting next candidate sepset from Petha:
+      //        Choose candidate sepset with the largest mass
+      //        If more than one have same mass, Choose candidate with the smallest cost.
+
+      // Choose Sepsets with Smallest Cost
+      let minWeight = Infinity;
+      let possibleSepSetsWeighted: ISepSet[] = [];
+      for (let x = 0; x < possibleSepSets.length; x++) {
+        // Get Product Weight of CliqueA
+        let weightA = 1;
+        const cliqueA = cliques.filter(
+          clique => clique.id === possibleSepSets[x].cliqueAID
+        )[0];
+        cliqueA.entityIDs.forEach(entityid => {
+          const entity = entityMap.get(entityid);
+          if (entity) {
+            weightA *=
+              entity.cpt && entity.cpt.length !== 0
+                ? entity.cpt.length * entity.states.length
+                : entity.states.length;
+          }
+        });
+        // Get Product Weight of CliqueB
+        let weightB = 1;
+        const cliqueB = cliques.filter(
+          clique => clique.id === possibleSepSets[x].cliqueBID
+        )[0];
+        cliqueB.entityIDs.forEach(entityid => {
+          const entity = entityMap.get(entityid);
+          if (entity) {
+            weightB *=
+              entity.cpt && entity.cpt.length !== 0
+                ? entity.cpt.length * entity.states.length
+                : entity.states.length;
+          }
+        });
+        // Sum of Cliques Weights
+        const weight = weightA + weightB;
+        if (weight < minWeight) {
+          possibleSepSetsWeighted = [possibleSepSets[x]];
+        } else if (weight === minWeight) {
+          possibleSepSetsWeighted.push(possibleSepSets[x]);
+        }
+      }
+
+      //console.log("PossibleSepSetsWeighted", possibleSepSetsWeighted);
+      return possibleSepSetsWeighted[0];
+    };
+
+    for (let x = 0; x < Petha.length - 1; x++) {
+      const sepSet = nextFromPetha(Petha, cliques, entityMap);
+
+      const idxOfsepSet = Petha.indexOf(sepSet);
+      Petha.splice(idxOfsepSet, 1);
+      //   b) Insert the sepset S(xy) between the cliques X and Y only if X and Y are on different trees in the forest.
+      //    (Note the insertion of such a sepset will merge two trees into a larger tree)
+
+      // for each sepset Place the
+      // So we have THe sepsets setup, just need to somehow insert them into tree. (Probably build new tree)
+
+      console.log("NextSepSet", idxOfsepSet, sepSet);
+    }
+
+    //return optimizedJunctionTree;
+  }
 }

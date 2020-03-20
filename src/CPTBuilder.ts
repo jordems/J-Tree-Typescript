@@ -1,19 +1,19 @@
-import IEntity from "./IEntity";
-import { ICPT, DependancyContitions, StateProbabilities } from "./ICPT";
+import IEntity from "./types/IEntity";
+import { ICPT, DependancyContitions, StateProbabilities } from "./types/ICPT";
 
 export class CPTBuilder {
   public buildCPTsForMap(entityMap: Map<string, IEntity>): void {
     const entityParentsMap = this.getParents(entityMap);
 
     entityMap.forEach(entity => {
-      const entityParents = entityParentsMap[entity.name];
+      const entityParents = entityParentsMap[entity.id];
 
       const cpt = this.buildCPT(entity, entityParents);
 
-      const mapEntity = entityMap.get(entity.name);
+      const mapEntity = entityMap.get(entity.id);
       if (mapEntity) {
         mapEntity.cpt = cpt;
-        entityMap.set(mapEntity.name, mapEntity);
+        entityMap.set(mapEntity.id, mapEntity);
       }
     });
   }
@@ -30,7 +30,7 @@ export class CPTBuilder {
       for (var i = 0; i < singleDependant.states.length; i++) {
         // Build Dependancy Conditions
         const depConditions: DependancyContitions = {
-          [singleDependant.name]: singleDependant.states[i]
+          [singleDependant.id]: singleDependant.states[i]
         };
 
         // Build Inital State Probabilities
@@ -60,8 +60,8 @@ export class CPTBuilder {
           for (var j = 0; j < depPair[1].states.length; j++) {
             // Build Dependancy Conditions
             const depConditions: DependancyContitions = {
-              [depPair[0].name]: depPair[0].states[i],
-              [depPair[1].name]: depPair[1].states[j]
+              [depPair[0].id]: depPair[0].states[i],
+              [depPair[1].id]: depPair[1].states[j]
             };
 
             // Build Inital State Probabilities
@@ -91,10 +91,10 @@ export class CPTBuilder {
     entityMap.forEach(entity => {
       if (entity.deps) {
         entity.deps.forEach(depEntity => {
-          if (!(depEntity.name in entityParents)) {
-            entityParents[depEntity.name] = [];
+          if (!(depEntity.id in entityParents)) {
+            entityParents[depEntity.id] = [];
           }
-          entityParents[depEntity.name].push(entity);
+          entityParents[depEntity.id].push(entity);
         });
       }
     });

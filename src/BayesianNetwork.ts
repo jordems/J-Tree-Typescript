@@ -1,5 +1,5 @@
 import Dag from "./Dag";
-import IEntity from "./IEntity";
+import IEntity from "./types/IEntity";
 
 export default class BayesianNetwork {
   private dag: Dag;
