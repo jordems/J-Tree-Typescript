@@ -1,5 +1,10 @@
+import IPotential from "./IPotential";
+
 export default interface ISepSet {
-  cliqueAID: string;
-  cliqueBID: string;
+  id: string;
+  cliqueXID: string;
+  cliqueYID: string;
   intersectingentityIDs: string[];
+  potentials?: IPotential[];
+  isSepSet: true;
 }
