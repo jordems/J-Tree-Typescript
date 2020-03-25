@@ -1,10 +1,10 @@
-import BayesianNetwork from "./BayesianNetwork";
-import IClique from "./types/IClique";
-import { Forest } from "./Tree";
-import { printMatrix } from "./PrintTools";
+import BayesianNetwork from "../BayesianNetwork";
+import IClique from "../types/IClique";
+import { Forest } from "../Tree";
+import { printMatrix } from "../PrintTools";
 import { cloneDeep } from "lodash";
-import ISepSet from "./types/ISepSet";
-import IEntity from "./types/IEntity";
+import ISepSet from "../types/ISepSet";
+import IEntity from "../types/IEntity";
 
 export default class GraphicalTransformer {
   private bnet: BayesianNetwork;

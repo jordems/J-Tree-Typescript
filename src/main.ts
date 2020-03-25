@@ -2,7 +2,7 @@ import IEntity from "./types/IEntity";
 import Dag from "./Dag";
 import BayesianNetwork from "./BayesianNetwork";
 import { CPTBuilder } from "./CPTBuilder";
-import JunctionTree from "./JunctionTree";
+import JunctionTree from "./JTree/JunctionTree";
 
 // Create all Test Entities
 let entityA: IEntity = { id: "A", states: ["on", "off"] };
