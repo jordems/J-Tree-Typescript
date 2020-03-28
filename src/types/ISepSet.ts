@@ -1,10 +1,9 @@
-import IPotential from "./IPotential";
+import IForestEntity from "./IForestEntity";
 
-export default interface ISepSet {
+export default interface ISepSet extends IForestEntity {
   id: string;
   cliqueXID: string;
   cliqueYID: string;
   intersectingentityIDs: string[];
-  potentials?: IPotential[];
   isSepSet: true;
 }

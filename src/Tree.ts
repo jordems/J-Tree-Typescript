@@ -1,16 +1,11 @@
 import IPotential from "./types/IPotential";
-
-interface GenericInterface {
-  id: string;
-  potentials?: IPotential[];
-  isSepSet: boolean;
-}
+import IForestEntity from "./types/IForestEntity";
 
 /**
  * @class Forest
  * This class will act as a datastruture for the forest
  */
-export class Forest<T extends GenericInterface> {
+export class Forest<T extends IForestEntity> {
   private treeEntities: { [id: string]: TreeEntity<T> } = {};
 
   public set(entity: T): void {
@@ -25,6 +20,54 @@ export class Forest<T extends GenericInterface> {
       return this.treeEntities[entity];
     }
     return this.treeEntities[entity.id];
+  }
+
+  public getRandomCluster(): TreeEntity<T> {
+    let possibleClusterIDs: string[] = [];
+    Object.keys(this.treeEntities).forEach(treeEntityID => {
+      if (!this.treeEntities[treeEntityID].getEntity().isSepSet) {
+        possibleClusterIDs.push(treeEntityID);
+      }
+    });
+    const randomIdx = Math.random() * possibleClusterIDs.length;
+
+    return this.treeEntities[randomIdx];
+  }
+
+  public getNeighboringClusters(
+    entity: T
+  ): { neighborCluster: TreeEntity<T>; fromSepset: TreeEntity<T> }[] {
+    let neighboringClusters: {
+      neighborCluster: TreeEntity<T>;
+      fromSepset: TreeEntity<T>;
+    }[] = [];
+
+    const treeEntity = this.get(entity);
+    if (!treeEntity) {
+      throw new Error("Attempting to Get neighbors from nonexisting node");
+    }
+    const sepSetEntityies = treeEntity.getEdges();
+
+    sepSetEntityies?.forEach(sepSet => {
+      const sepSetTreeEntity = this.get(sepSet);
+      if (sepSetTreeEntity) {
+        const posneighbors = sepSetTreeEntity.getEdges();
+
+        posneighbors?.forEach(posneighbor => {
+          if (posneighbor !== entity) {
+            const neighbor = this.get(posneighbor);
+            if (neighbor) {
+              neighboringClusters.push({
+                neighborCluster: neighbor,
+                fromSepset: sepSetTreeEntity
+              });
+            }
+          }
+        });
+      }
+    });
+
+    return neighboringClusters;
   }
 
   public exists(entity: T | string): boolean {
@@ -43,6 +86,12 @@ export class Forest<T extends GenericInterface> {
       this.get(entityA).removeDirectEdge(entityB);
       this.get(entityB).removeDirectEdge(entityA);
     }
+  }
+
+  public unmarkAll(): void {
+    Object.keys(this.treeEntities).forEach(entityKey => {
+      this.treeEntities[entityKey].unmark();
+    });
   }
 
   public isOnSameTree(entityA: T, entityB: T): boolean {
@@ -81,7 +130,7 @@ export class Forest<T extends GenericInterface> {
   };
 }
 
-class TreeEntity<T extends GenericInterface> {
+export class TreeEntity<T extends IForestEntity> {
   private entity: T;
   private edges: T[] = [];
 
@@ -113,7 +162,28 @@ class TreeEntity<T extends GenericInterface> {
   }
 
   public setPotentials(potentials: IPotential[]): void {
+    const current = this.entity.potentials;
+
+    // If current potentials exist set it to oldPotentials
+    if (current) {
+      this.entity.oldPotentials = current;
+    }
+
     this.entity.potentials = potentials;
+  }
+
+  public getPotentials(): IPotential[] | undefined {
+    return this.entity.potentials;
+  }
+  public getOldPotentials(): IPotential[] | undefined {
+    return this.entity.oldPotentials;
+  }
+
+  public mark(): void {
+    this.entity.marked = true;
+  }
+  public unmark(): void {
+    this.entity.marked = false;
   }
 
   public toString = (): string => {

@@ -1,8 +1,7 @@
-import IPotential from "./IPotential";
+import IForestEntity from "./IForestEntity";
 
-export default interface IClique {
+export default interface IClique extends IForestEntity {
   id: string;
   entityIDs: string[];
-  potentials?: IPotential[];
   isSepSet: false;
 }

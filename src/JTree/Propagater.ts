@@ -1,7 +1,9 @@
 import IEntity from "../types/IEntity";
 import ISepSet from "../types/ISepSet";
 import IClique from "../types/IClique";
-import { Forest } from "../Tree";
+import { Forest, TreeEntity } from "../Tree";
+import IForestEntity from "../types/IForestEntity";
+import IPotential from "../types/IPotential";
 
 export default class Propagater {
   private entityMap: Map<string, IEntity>;
@@ -18,25 +20,97 @@ export default class Propagater {
   private propagate(
     inconsistentJunctionTree: Forest<IClique | ISepSet>
   ): Forest<IClique | ISepSet> {
-    //Single Message PASS
-    // Projection. Assign a new table to R, saving the old table
-    // Absorption. Assign a new table to Y, using both the old and new tables of R
-    //Coordinating Multi Messages
     // Global Propagation
+
     // 1. Choose an arbitrary cluster X
+    const clusterX = inconsistentJunctionTree.getRandomCluster() as TreeEntity<
+      IClique
+    >;
     // 2. Unmark all clusters. Call Collect-Evidence(X)
+    inconsistentJunctionTree.unmarkAll();
+    this.collectEvidence(inconsistentJunctionTree, clusterX);
+
     // 3. Unmark all clusters. Call Distrubite-Evidence(X).
-    // Where
-    // Collect-Evidence(X):
-    // 1. Mark X
-    // 2. Call Collect-Evidence recursively on X's unmarked neighboring clusters, if any
-    // 3. Pass a message from X to the cluster which invoked Collect-Evidence(X)
-    // Distrubite-Evidence(X):
-    // 1. Mark X
-    // 2. Pass a message from X to each of its unmarked neighboring clusters, if any
-    // 3. Call Distrubite-Evidence recursively on X's unmarked neighboring clusters, if any
-    // returns consistent Join Tree
+    inconsistentJunctionTree.unmarkAll();
+    this.distrubuteEvidence(inconsistentJunctionTree, clusterX);
+
     return inconsistentJunctionTree;
+  }
+
+  private passMessage(
+    clusterX: TreeEntity<IClique>,
+    sepsetR: TreeEntity<ISepSet>,
+    clusterY: TreeEntity<IClique>
+  ): void {
+    const sigmaX = clusterX.getPotentials();
+    const sigmaY = clusterY.getPotentials();
+    const sigmaR = sepsetR.getPotentials();
+
+    if (sigmaX === undefined || sigmaY === undefined || sigmaR === undefined) {
+      throw new Error("Potentials Not assigned.");
+    }
+
+    let projPotential: IPotential[] = [];
+
+    //TODO Projection: Assign a new table to R saveing the old table.
+
+    sepsetR.setPotentials(projPotential);
+
+    let absorbPotential: IPotential[] = [];
+
+    //TODO Absorption. Assign a new table to Y, using both the old and the new tables of R.
+
+    clusterY.setPotentials(absorbPotential);
+  }
+
+  private collectEvidence(
+    jTree: Forest<IClique | ISepSet>,
+    clusterX: TreeEntity<IClique>
+  ) {
+    // Mark X
+    clusterX.mark();
+    // Call collectEvidence recursively on X's unmarked neighboring clusters, if any
+    const neighboringClusters = jTree.getNeighboringClusters(
+      clusterX.getEntity()
+    );
+
+    neighboringClusters.forEach(({ neighborCluster, fromSepset }) => {
+      if (!neighborCluster.getEntity().marked) {
+        this.collectEvidence(jTree, neighborCluster as TreeEntity<IClique>);
+
+        // Pass a message from X to the cluster which invoked collectEvidence
+        this.passMessage(
+          clusterX,
+          fromSepset as TreeEntity<ISepSet>,
+          neighborCluster as TreeEntity<IClique>
+        );
+      }
+    });
+  }
+  private distrubuteEvidence(
+    jTree: Forest<IClique | ISepSet>,
+    clusterX: TreeEntity<IClique>
+  ) {
+    // Mark X
+    clusterX.mark();
+    // Pass a message from X to each of its unmarked neighboring clusters, if any
+    const neighboringClusters = jTree.getNeighboringClusters(
+      clusterX.getEntity()
+    );
+
+    neighboringClusters.forEach(({ neighborCluster, fromSepset }) => {
+      if (!neighborCluster.getEntity().marked) {
+        // Pass a message from X to the cluster which invoked collectEvidence
+        this.passMessage(
+          clusterX,
+          fromSepset as TreeEntity<ISepSet>,
+          neighborCluster as TreeEntity<IClique>
+        );
+
+        // call distrubuteEvidence recursively on X's unmarked neighboring clusters, if any
+        this.distrubuteEvidence(jTree, neighborCluster as TreeEntity<IClique>);
+      }
+    });
   }
 
   public getConsistentJunctionTree(): Forest<IClique | ISepSet> {
