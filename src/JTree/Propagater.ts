@@ -26,6 +26,7 @@ export default class Propagater {
     const clusterX = inconsistentJunctionTree.getRandomCluster() as TreeEntity<
       IClique
     >;
+    console.log("Chose arbitrary cluster", clusterX);
     // 2. Unmark all clusters. Call Collect-Evidence(X)
     inconsistentJunctionTree.unmarkAll();
     this.collectEvidence(inconsistentJunctionTree, clusterX);
@@ -52,13 +53,50 @@ export default class Propagater {
 
     let projPotential: IPotential[] = [];
 
-    //TODO Projection: Assign a new table to R saveing the old table.
+    // Projection: Assign a new table to R saveing the old table.
+    sigmaR.forEach(vX => {
+      const entities = Object.keys(vX);
+
+      let newPotential: number = 0;
+      sigmaX.forEach((sigX, idx) => {
+        let isIntersect = true;
+        entities.forEach(entity => {
+          if (!(entity in sigX.if)) {
+            isIntersect = false;
+          }
+        });
+        if (isIntersect) {
+          newPotential += sigX.then;
+        }
+      });
+      projPotential.push({ if: vX.if, then: newPotential });
+    });
 
     sepsetR.setPotentials(projPotential);
 
     let absorbPotential: IPotential[] = [];
 
     //TODO Absorption. Assign a new table to Y, using both the old and the new tables of R.
+    const sigR = sepsetR.getPotentials();
+    const oldsigR = sepsetR.getOldPotentials();
+    const sigY = clusterY.getPotentials();
+
+    if (sigR === undefined || oldsigR === undefined || sigY === undefined) {
+      throw new Error("Potentials Not assigned.");
+    }
+
+    let divRpotentials: IPotential[] = [];
+
+    sigR.forEach((sR, idx) => {
+      divRpotentials.push({
+        if: sR.if,
+        then: oldsigR[idx].then === 0 ? 0 : sR.then / oldsigR[idx].then
+      });
+    });
+
+    sigY.forEach(sY => {
+      //TODO absorbPotentials = SigY * Sig divRpotentials
+    });
 
     clusterY.setPotentials(absorbPotential);
   }
@@ -67,6 +105,7 @@ export default class Propagater {
     jTree: Forest<IClique | ISepSet>,
     clusterX: TreeEntity<IClique>
   ) {
+    console.log("collectEvidence", clusterX);
     // Mark X
     clusterX.mark();
     // Call collectEvidence recursively on X's unmarked neighboring clusters, if any

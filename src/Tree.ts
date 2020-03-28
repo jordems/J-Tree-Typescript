@@ -29,9 +29,12 @@ export class Forest<T extends IForestEntity> {
         possibleClusterIDs.push(treeEntityID);
       }
     });
-    const randomIdx = Math.random() * possibleClusterIDs.length;
 
-    return this.treeEntities[randomIdx];
+    const randomIdx = Math.round(
+      Math.random() * (possibleClusterIDs.length - 1)
+    );
+
+    return this.treeEntities[possibleClusterIDs[randomIdx]];
   }
 
   public getNeighboringClusters(
