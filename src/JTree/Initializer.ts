@@ -1,9 +1,10 @@
-import { Forest } from "../Tree";
+import { cloneDeep } from "lodash";
+
+import Forest from "../graphstructures/Forest";
 import IClique from "../types/IClique";
 import ISepSet from "../types/ISepSet";
 import IPotential from "../types/IPotential";
 import IEntity from "../types/IEntity";
-import ICPT from "../types/ICPT";
 import { DependancyContitions } from "../types/ICPT";
 
 export default class Initializer {
@@ -35,8 +36,8 @@ export default class Initializer {
         potentials = this.getEntityPotentials(entitiesforPotentials);
       }
       console.log(potentials);
-      //console.log(potentials);
-      optimizedJunctionTree.get(id).setPotentials(potentials);
+
+      optimizedJunctionTree.addPotentials(entity, potentials);
     });
 
     // For each variable V, perform the following: Assign to V a cluster X that contains Fv; call X the parent cluster of Fv.
@@ -80,7 +81,10 @@ export default class Initializer {
               if (depEntityCPT) {
                 let CPTprob = -1;
                 depEntityCPT.forEach(cptcondition => {
-                  if (entity.id in cptcondition.if) {
+                  if (
+                    entity.id in cptcondition.if ||
+                    Object.keys(cptcondition.if).length === 0
+                  ) {
                     if (cptcondition.if[entity.id] === es.state) {
                       CPTprob = cptcondition.then[esd.state];
                     }
@@ -98,72 +102,9 @@ export default class Initializer {
 
       potentials.push({
         if: dif,
-        then: potential
+        then: Math.abs(potential)
       });
     });
-
-    // for (let x = 0; x < entityIDsForPotentials.length; x++) {
-    //     for (let y = 0; y < entityIDsForPotentials.length; y++) {
-    //       if (x !== y) {
-    //         const entityX = entityIDsForPotentials[x];
-    //         const entityY = entityIDsForPotentials[y];
-
-    //         // For each pair of states
-    //         const entityXStates = this.entityMap.get(entityX)?.states as string[];
-    //         const entityYStates = this.entityMap.get(entityY)?.states as string[];
-
-    //         for (let xs = 0; xs < entityXStates.length; xs++) {
-    //           for (let ys = 0; ys < entityYStates.length; ys++) {
-    //             let potential = 1;
-    //             let pairs: Array<[string, string]> = [];
-    //             for (let xp = 0; xp < entityIDsForPotentials.length; xp++) {
-    //               for (let yp = 0; yp < entityIDsForPotentials.length; yp++) {
-    //                 const entityidXP = entityIDsForPotentials[xp];
-    //                 const entityidYP = entityIDsForPotentials[yp];
-
-    //                 const entityXP = this.entityMap.get(entityidXP);
-
-    //                 const entityXPDeps = entityXP ? entityXP.deps : [];
-    //                 if (entityXPDeps) {
-    //                   entityXPDeps.forEach(dep => {
-    //                     if (dep.id === entityidYP) {
-    //                       pairs.push([entityidXP, entityidYP]);
-    //                     }
-    //                   });
-    //                 }
-    //               }
-    //             }
-
-    //             pairs.forEach(pair => {
-    //               const entityXC = pair[0];
-    //               const entityYC = pair[1];
-    //               // Grab CPT's for later
-    //               const entityYCPTs = this.entityMap.get(entityYC)?.cpt as ICPT;
-    //               console.log(pair, entityYCPTs, entityXC);
-    //               let CPTprob = -1;
-    //               entityYCPTs.forEach(cptcondition => {
-    //                 if (entityXC in cptcondition.if) {
-    //                   if (cptcondition.if[entityXC] === entityXStates[xs]) {
-    //                     CPTprob = cptcondition.then[entityYStates[ys]];
-    //                   }
-    //                 }
-    //               });
-
-    //               potential *= CPTprob;
-    //             });
-
-    //             potentials.push({
-    //               if: {
-    //                 [entityX]: entityXStates[xs],
-    //                 [entityY]: entityYStates[ys]
-    //               },
-    //               then: potential
-    //             });
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
 
     return potentials;
   }

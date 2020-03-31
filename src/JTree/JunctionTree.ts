@@ -2,7 +2,7 @@ import BayesianNetwork from "../BayesianNetwork";
 
 import GraphicalTransformer from "./GraphicalTransformer";
 import Initializer from "./Initializer";
-import { Forest } from "../Tree";
+import Forest from "../graphstructures/Forest";
 import IClique from "../types/IClique";
 import ISepSet from "../types/ISepSet";
 import IEntity from "../types/IEntity";

@@ -1,8 +1,8 @@
 import IEntity from "./types/IEntity";
-import Dag from "./Dag";
+import DagBuilder from "./DagBuilder";
 import BayesianNetwork from "./BayesianNetwork";
 import { CPTBuilder } from "./CPTBuilder";
-import JunctionTree from "./JTree/JunctionTree";
+import JunctionTree from "./jtree/JunctionTree";
 
 // Create all Test Entities
 let entityA: IEntity = { id: "A", states: ["on", "off"] };
@@ -69,16 +69,16 @@ entityMap.set(entityG.id, entityG);
 entityMap.set(entityH.id, entityH);
 
 // Build Dag with Entity Relationships
-const dag = new Dag(entityMap);
+const dagBuilder = new DagBuilder();
+
+const dag = dagBuilder.buildDag(entityMap);
 
 // Display Dag
-console.log(dag.getMatrix());
+dag.displayMatrix();
 
 // IF CPT's Arn't given, this function will create Required CPT's that need to be filled
 //const cptBuilder = new CPTBuilder();
 //cptBuilder.buildCPTsForMap(entityMap);
-
-//console.log(entityMap.get("A")?.cpt);
 
 const bnet = new BayesianNetwork(entityMap, dag);
 

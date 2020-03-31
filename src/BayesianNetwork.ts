@@ -1,16 +1,16 @@
-import Dag from "./Dag";
 import IEntity from "./types/IEntity";
+import DirectedGraph from "./graphstructures/DirectedGraph";
 
 export default class BayesianNetwork {
-  private dag: Dag;
+  private dag: DirectedGraph<IEntity>;
   private entityMap: Map<string, IEntity>;
 
-  constructor(entityMap: Map<string, IEntity>, dag: Dag) {
+  constructor(entityMap: Map<string, IEntity>, dag: DirectedGraph<IEntity>) {
     this.entityMap = entityMap;
     this.dag = dag;
   }
 
-  public getDag(): Dag {
+  public getDag(): DirectedGraph<IEntity> {
     return this.dag;
   }
 

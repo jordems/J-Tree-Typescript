@@ -1,51 +1,47 @@
+import { cloneDeep } from "lodash";
+
 import BayesianNetwork from "../BayesianNetwork";
 import IClique from "../types/IClique";
-import { Forest } from "../Tree";
+import Forest from "../graphstructures/Forest";
 import { printMatrix } from "../PrintTools";
-import { cloneDeep } from "lodash";
 import ISepSet from "../types/ISepSet";
 import IEntity from "../types/IEntity";
+import UnDirectedGraph from "../graphstructures/UnDirectedGraph";
+import GraphMoralizer from "../graphstructures/GraphMoralizer";
 
 export default class GraphicalTransformer {
-  private bnet: BayesianNetwork;
-  private moralGraph: number[][];
-  private triangulatedGraph: number[][];
-  private cliques: IClique[];
   private optimizedJunctionTree: Forest<IClique | ISepSet>;
 
   constructor(bnet: BayesianNetwork) {
-    this.bnet = bnet;
-    this.moralGraph = this.buildMoralGraph();
+    const moralGraph = this.buildMoralGraph(bnet);
 
-    [this.triangulatedGraph, this.cliques] = this.buildTriangulatedGraph();
+    const [triangulatedGraph, cliques] = this.buildTriangulatedGraph(
+      moralGraph
+    );
 
-    this.optimizedJunctionTree = this.buildOptimizedJunctionTree();
+    this.optimizedJunctionTree = this.buildOptimizedJunctionTree(
+      bnet,
+      triangulatedGraph,
+      cliques
+    );
   }
 
   /**
    * Builds Moral Graph from the bayes nets Dag
    * @returns MoralGraph
    */
-  private buildMoralGraph(): number[][] {
-    const dagMatrix = this.bnet.getDag().getMatrix();
+  private buildMoralGraph(bnet: BayesianNetwork): UnDirectedGraph<IEntity> {
+    const dag = bnet.getDag();
 
-    let undirectedGraph: number[][] = new Array(dagMatrix.length)
-      .fill(0)
-      .map(() => new Array(dagMatrix.length).fill(0));
+    let undirectedGraph: UnDirectedGraph<IEntity>;
 
     // Generate Undirected Graph from Dag
-    for (let x = 0; x < dagMatrix.length; x++) {
-      for (let y = 0; y < dagMatrix[x].length; y++) {
-        if (dagMatrix[x][y] === 1) {
-          undirectedGraph[x][y] = 1;
-          undirectedGraph[y][x] = 1;
-        }
-      }
-    }
+    const graphMoralizer = new GraphMoralizer<IEntity>();
+    undirectedGraph = graphMoralizer.moralize(dag);
 
     // Create "Moral arcs"
     // First we must find each of the parents
-    const entityMap = this.bnet.getEntityMap();
+    const entityMap = bnet.getEntityMap();
     const entityParents: { [entityID: string]: string[] } = {};
     entityMap.forEach(entity => {
       if (entity.deps) {
@@ -66,17 +62,18 @@ export default class GraphicalTransformer {
       if (entitiesParents.length > 1) {
         for (let x = 0; x < entitiesParents.length; x++) {
           for (let y = 0; y < entitiesParents.length; y++) {
-            const p1IDX = this.bnet.getDag().getIdxbyLabel(entitiesParents[x]);
-            const p2IDX = this.bnet.getDag().getIdxbyLabel(entitiesParents[y]);
+            const p1IDX = dag.get(entitiesParents[x]).getEntity();
+            const p2IDX = dag.get(entitiesParents[y]).getEntity();
             if (p1IDX !== p2IDX) {
-              undirectedGraph[p1IDX][p2IDX] = 1;
+              undirectedGraph.addEdge(p1IDX, p2IDX);
             }
           }
         }
       }
     });
+
     console.log("Moral Graph");
-    printMatrix(undirectedGraph);
+    undirectedGraph.displayMatrix();
     return undirectedGraph;
   }
 
@@ -84,162 +81,135 @@ export default class GraphicalTransformer {
    * Builds Triangulated Graph from Moral Graph and also finds Cliques
    * @returns  [TriangulatedGraph, Cliques]
    */
-  private buildTriangulatedGraph(): [number[][], IClique[]] {
-    let moralGraphCopy = cloneDeep(this.moralGraph); // Create Deep Copy of moralGraph
-    let triangulatedGraph = cloneDeep(this.moralGraph); // Create Deep Copy of moralGraph
-    let moralIdxTracker = Array.from(Array(moralGraphCopy.length).keys()); // Array to keep track of original idxs
+  private buildTriangulatedGraph(
+    moralGraph: UnDirectedGraph<IEntity>
+  ): [UnDirectedGraph<IEntity>, IClique[]] {
+    let moralGraphCopy = cloneDeep(moralGraph); // Create Deep Copy of moralGraph
+    let triangulatedGraph = cloneDeep(moralGraph); // Create Deep Copy of moralGraph
 
     let inducedClusters: IClique[] = []; // report induced Clusters for when building Clinques
 
-    const entityMap = this.bnet.getEntityMap();
-
     // While moralGraphCopy is not empty
-    while (moralGraphCopy.length > 0) {
-      let idxToRemove = -1;
+    while (moralGraphCopy.getIDs().length > 0) {
+      let idxToRemove: string = "";
       //    Select a entity V from moralGraphCopy according to:
       //      Weight of entity V  is the number of values of V. IN our case number of elements in CPT array.
       //      Weight of cluster is the product of the weights of the entites with
       //      **When selecting entities to remove: Choose the entity that causes the least number of edges to be added in the next step,
-      let entityEdgesAdded: number[] = [];
-      for (let x = 0; x < moralGraphCopy.length; x++) {
-        // init
-        if (!(x in entityEdgesAdded)) {
-          entityEdgesAdded[x] = 0;
+      let entityEdgesAddedCount: { [entityid: string]: number } = {};
+      moralGraphCopy.getValues().forEach(curGraphentity => {
+        const curEntity = curGraphentity.getEntity();
+
+        // init Count
+        if (!(curEntity.id in entityEdgesAddedCount)) {
+          entityEdgesAddedCount[curEntity.id] = 0;
         }
 
         // Get Neighbors
-        const neighboridxs: number[] = [];
-        for (let y = 0; y < moralGraphCopy[x].length; y++) {
-          if (moralGraphCopy[x][y] === 1) {
-            neighboridxs.push(y);
-          }
-        }
+        const neightbors = curGraphentity.getEdges();
 
         // Count how many edges would be added
-        for (let i = 0; i < neighboridxs.length; i++) {
-          for (let j = 0; j < neighboridxs.length; j++) {
-            const n1 = neighboridxs[i];
-            const n2 = neighboridxs[j];
-            if (n1 !== n2 && moralGraphCopy[n1][n2] !== 1) {
-              entityEdgesAdded[x] += 1;
+        neightbors?.forEach(n1 => {
+          neightbors?.forEach(n2 => {
+            if (n1.id !== n2.id && !moralGraphCopy.get(n1).hasEdge(n2)) {
+              entityEdgesAddedCount[curEntity.id] += 1;
             }
-          }
-        }
-      }
+          });
+        });
+      });
 
-      // Get Entites with lows amount of edges added
-      const lowestEdgeCountIdxs: number[] = [];
-      const minEdgeCount = Math.min(...entityEdgesAdded);
-      for (let x = 0; x < entityEdgesAdded.length; x++) {
-        if (minEdgeCount === entityEdgesAdded[x]) {
-          lowestEdgeCountIdxs.push(x);
+      // Get Entites with lowest amount of edges added
+      const lowestEdgeCountIds: string[] = [];
+      const minEdgeCount = Math.min(...Object.values(entityEdgesAddedCount));
+      Object.keys(entityEdgesAddedCount).forEach(entityID => {
+        console.log("Count ", entityID, entityEdgesAddedCount[entityID]);
+        if (minEdgeCount === entityEdgesAddedCount[entityID]) {
+          lowestEdgeCountIds.push(entityID);
         }
-      }
+      });
 
       //      breaking ties by choosing the entity that induces the cluster with the smallest weight.
-      if (lowestEdgeCountIdxs.length === 1) {
-        idxToRemove = lowestEdgeCountIdxs[0];
-        console.log(
-          this.bnet
-            .getDag()
-            .getLabelbyIdx(moralIdxTracker[lowestEdgeCountIdxs[0]])
-        );
+      if (lowestEdgeCountIds.length === 1) {
+        idxToRemove = lowestEdgeCountIds[0];
       } else {
         let minWeight = Infinity;
-        for (let x = 0; x < lowestEdgeCountIdxs.length; x++) {
-          const idx = lowestEdgeCountIdxs[x];
-          const entity = entityMap.get(
-            this.bnet.getDag().getLabelbyIdx(moralIdxTracker[idx])
-          );
+        for (let x = 0; x < lowestEdgeCountIds.length; x++) {
+          const idx = lowestEdgeCountIds[x];
+          const graphEntity = moralGraphCopy.get(idx);
 
-          if (entity) {
-            const entityWeight =
-              entity.cpt && entity.cpt.length !== 0
-                ? entity.cpt.length * entity.states.length
-                : entity.states.length;
+          const entity = graphEntity.getEntity();
 
-            let clusterWeights: number[] = [entityWeight];
-            // Get Neighbors
-            for (let y = 0; y < moralGraphCopy[idx].length; y++) {
-              if (moralGraphCopy[idx][y] === 1) {
-                const neighborEntity = entityMap.get(
-                  this.bnet.getDag().getLabelbyIdx(moralIdxTracker[y])
-                );
-                if (neighborEntity) {
-                  clusterWeights.push(
-                    neighborEntity.cpt && neighborEntity.cpt.length !== 0
-                      ? neighborEntity.cpt.length * neighborEntity.states.length
-                      : neighborEntity.states.length
-                  );
-                }
-              }
-            }
-            // Get Weight of Cluster
-            const weight = clusterWeights.reduce((a, b) => a * b);
-            console.log(
-              this.bnet.getDag().getLabelbyIdx(moralIdxTracker[idx]),
-              weight
+          // Get Neighbors Weights
+          const neightbors = graphEntity.getEdges();
+
+          const entityWeight =
+            (entity.cpt &&
+            entity.cpt.length !== 0 &&
+            Object.keys(entity.cpt[0].if).length !== 0
+              ? entity.states.length * Object.keys(entity.cpt[0].if).length
+              : 1) * neightbors.length;
+
+          let clusterWeights: number[] = [entityWeight];
+          let nstr = "";
+          neightbors?.forEach(neighborEntity => {
+            nstr += neighborEntity.id + ", ";
+            clusterWeights.push(
+              (neighborEntity.cpt &&
+              neighborEntity.cpt.length !== 0 &&
+              Object.keys(neighborEntity.cpt[0].if).length !== 0
+                ? neighborEntity.states.length *
+                  Object.keys(neighborEntity.cpt[0].if).length
+                : 1) * neightbors.length
             );
-            if (weight <= minWeight) {
-              minWeight = weight;
-              idxToRemove = idx;
-            }
+          });
+          // Get Weight of Cluster
+          const weight = clusterWeights.reduce((a, b) => a * b);
+
+          console.log(idx, weight, clusterWeights, nstr);
+          //console.log(neightbors);
+          if (weight <= minWeight) {
+            minWeight = weight;
+            idxToRemove = idx;
           }
         }
       }
+      console.log("Triangulation Removeing idx", idxToRemove);
       console.log("cycle");
       //    With the entity V selected
+      const selectedGraphEntity = moralGraphCopy.get(idxToRemove);
       //    Get its neighbors and, this forms a cluster
-      const labelOfIdxtoRemove = this.bnet
-        .getDag()
-        .getLabelbyIdx(moralIdxTracker[idxToRemove]);
 
-      let neighboridxs: number[] = [];
       let inducedCluster: IClique = {
-        id: labelOfIdxtoRemove,
-        entityIDs: [labelOfIdxtoRemove],
+        id: idxToRemove,
+        entityIDs: [idxToRemove],
         isSepSet: false
       };
-      for (let x = 0; x < moralGraphCopy[idxToRemove].length; x++) {
-        if (moralGraphCopy[idxToRemove][x] === 1) {
-          neighboridxs.push(x);
 
-          const labelOfInducedClusterNeighbors = this.bnet
-            .getDag()
-            .getLabelbyIdx(moralIdxTracker[x]);
-          inducedCluster.id += labelOfInducedClusterNeighbors;
-          inducedCluster.entityIDs.push(labelOfInducedClusterNeighbors);
-        }
-      }
+      selectedGraphEntity.getEdges()?.forEach(n => {
+        inducedCluster.id += n.id;
+        inducedCluster.entityIDs.push(n.id);
+      });
 
       // Add to inducedClusters
       inducedClusters.push(inducedCluster);
 
       //    Connect all nodes in this cluster, for each new edge added to moralGraphCopy add this edge to the triangulatedGraph
-      for (let x = 0; x < neighboridxs.length; x++) {
-        for (let y = 0; y < neighboridxs.length; y++) {
-          const n1 = neighboridxs[x];
-          const n2 = neighboridxs[y];
+      selectedGraphEntity.getEdges()?.forEach(n1 => {
+        selectedGraphEntity.getEdges()?.forEach(n2 => {
+          if (n1.id !== n2.id) {
+            moralGraphCopy.addEdge(n1, n2);
 
-          if (n1 !== n2) {
-            moralGraphCopy[n1][n2] = 1;
-
-            triangulatedGraph[moralIdxTracker[n1]][moralIdxTracker[n2]] = 1;
+            triangulatedGraph.addEdge(n1, n2);
           }
-        }
-      }
+        });
+      });
 
       //    Remove Entity V from moralGraphCopy and sync moralIdxTracker
-      for (let x = 0; x < moralGraphCopy.length; x++) {
-        moralGraphCopy[x].splice(idxToRemove, 1);
-      }
-
-      moralGraphCopy.splice(idxToRemove, 1);
-      moralIdxTracker.splice(idxToRemove, 1);
+      moralGraphCopy.remove(moralGraphCopy.get(idxToRemove).getEntity());
     }
 
     console.log("triangulatedGraph");
-    printMatrix(triangulatedGraph);
+    triangulatedGraph.displayMatrix();
     console.log("inducedClusters", inducedClusters);
 
     // Remove any subset induced Clusters and generate cliques
@@ -272,9 +242,12 @@ export default class GraphicalTransformer {
    * Using Cliques from Graph Triangulation Build to create Optimized Join Tree
    * @returns OptimizedJunctionTree
    */
-  private buildOptimizedJunctionTree(): Forest<IClique | ISepSet> {
-    const { cliques } = this;
-    const entityMap = this.bnet.getEntityMap();
+  private buildOptimizedJunctionTree(
+    bnet: BayesianNetwork,
+    triangulatedGraph: UnDirectedGraph<IEntity>,
+    cliques: IClique[]
+  ): Forest<IClique | ISepSet> {
+    const entityMap = bnet.getEntityMap();
 
     // Begin with a set of n trees, each consisting of a single clique, and an empty set cliqueTree
     let cliqueForest = new Forest<IClique | ISepSet>();
