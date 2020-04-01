@@ -44,7 +44,7 @@ export default class Initializer {
     // Multiply sigmax by P(V|PIv):
     // returns inconsistent Join Tree
 
-    console.log("inConsistent Tree", optimizedJunctionTree.toString());
+    //console.log("inConsistent Tree", optimizedJunctionTree.toString());
     return optimizedJunctionTree;
   }
 

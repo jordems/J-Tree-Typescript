@@ -133,6 +133,7 @@ export default class GraphicalTransformer {
         idxToRemove = lowestEdgeCountIds[0];
       } else {
         let minWeight = Infinity;
+        let valueswithMinWeight: string[] = [];
         for (let x = 0; x < lowestEdgeCountIds.length; x++) {
           const idx = lowestEdgeCountIds[x];
           const graphEntity = moralGraphCopy.get(idx);
@@ -142,24 +143,17 @@ export default class GraphicalTransformer {
           // Get Neighbors Weights
           const neightbors = graphEntity.getEdges();
 
-          const entityWeight =
-            (entity.cpt &&
-            entity.cpt.length !== 0 &&
-            Object.keys(entity.cpt[0].if).length !== 0
-              ? entity.states.length * Object.keys(entity.cpt[0].if).length
-              : 1) * neightbors.length;
-
-          let clusterWeights: number[] = [entityWeight];
+          let clusterWeights: number[] = [];
           let nstr = "";
           neightbors?.forEach(neighborEntity => {
             nstr += neighborEntity.id + ", ";
             clusterWeights.push(
-              (neighborEntity.cpt &&
-              neighborEntity.cpt.length !== 0 &&
-              Object.keys(neighborEntity.cpt[0].if).length !== 0
+              neighborEntity.cpt &&
+                neighborEntity.cpt.length !== 0 &&
+                Object.keys(neighborEntity.cpt[0].if).length !== 0
                 ? neighborEntity.states.length *
-                  Object.keys(neighborEntity.cpt[0].if).length
-                : 1) * neightbors.length
+                    Object.keys(neighborEntity.cpt[0].if).length
+                : 0
             );
           });
           // Get Weight of Cluster
@@ -167,9 +161,24 @@ export default class GraphicalTransformer {
 
           console.log(idx, weight, clusterWeights, nstr);
           //console.log(neightbors);
-          if (weight <= minWeight) {
+
+          if (weight === minWeight) {
+            valueswithMinWeight.push(idx);
+          } else if (weight < minWeight) {
             minWeight = weight;
-            idxToRemove = idx;
+            valueswithMinWeight = [idx];
+          }
+        }
+        // Break Ties of Entities with the same weight, by grabing the entity that was placed in the graph first
+        // Seems that they did this in the research paper that we are following (Inference in Belief Networks: A Procedural Guide)
+        let minPlace = Infinity;
+        for (let x = 0; x < valueswithMinWeight.length; x++) {
+          const curPlace = moralGraphCopy
+            .get(valueswithMinWeight[x])
+            .getValue();
+          if (curPlace < minPlace) {
+            minPlace = curPlace;
+            idxToRemove = valueswithMinWeight[x];
           }
         }
       }
@@ -404,7 +413,7 @@ export default class GraphicalTransformer {
         cliqueForest.addEdge(cliqueY, sepSet);
       }
     }
-    console.log(cliqueForest.toString());
+    //console.log(cliqueForest.toString());
     return cliqueForest;
   }
 

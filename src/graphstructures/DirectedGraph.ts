@@ -12,13 +12,15 @@ interface GenericType {
 export default class DirectedGraph<T extends GenericType>
   implements IGeneralGraph<T> {
   private graphEntities: { [id: string]: GraphEntity<T> };
-
+  private count: number;
   constructor() {
     this.graphEntities = {};
+    this.count = 0;
   }
 
   public set(entity: T): void {
-    this.graphEntities[entity.id] = new GraphEntity(entity);
+    this.count += 1;
+    this.graphEntities[entity.id] = new GraphEntity(entity, this.count);
   }
 
   public get(entity: T | string): GraphEntity<T> {

@@ -76,7 +76,7 @@ const dag = dagBuilder.buildDag(entityMap);
 // Display Dag
 dag.displayMatrix();
 
-// IF CPT's Arn't given, this function will create Required CPT's that need to be filled
+// IF CPT's Arn't given, this function will create Required CPT's that need to be filled (inital values sum to 1: ex: low, med, high = .3 .3 .3)
 //const cptBuilder = new CPTBuilder();
 //cptBuilder.buildCPTsForMap(entityMap);
 
@@ -85,3 +85,10 @@ const bnet = new BayesianNetwork(entityMap, dag);
 const jtree = new JunctionTree(bnet);
 
 jtree.marginalize(entityA);
+jtree.marginalize(entityB);
+jtree.marginalize(entityC);
+jtree.marginalize(entityD);
+jtree.marginalize(entityE);
+jtree.marginalize(entityF);
+jtree.marginalize(entityG);
+jtree.marginalize(entityH);

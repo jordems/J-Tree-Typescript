@@ -47,7 +47,6 @@ export default class JunctionTree {
 
   public marginalize(entity: IEntity) {
     const margPotentials = this.marginalizer.marginalize(entity);
-
     console.log(margPotentials);
   }
 }
