@@ -9,9 +9,11 @@ import IEntity from "../types/IEntity";
 import IPotential from "../types/IPotential";
 import ICPT from "../types/ICPT";
 import Propagater from "./Propagater";
+import Marginalizer from "./Marginalizer";
 
 export default class JunctionTree {
   private entityMap: Map<string, IEntity>;
+  private marginalizer: Marginalizer;
   constructor(bnet: BayesianNetwork) {
     this.entityMap = bnet.getEntityMap();
 
@@ -24,6 +26,9 @@ export default class JunctionTree {
 
     // Propagation to create a Consistent Junction Tree
     const consistentJunctionTree = this.propogate(inconsistentJunctionTree);
+
+    // Set up Marginalizer
+    this.marginalizer = new Marginalizer(consistentJunctionTree);
   }
 
   private initialize(
@@ -40,9 +45,9 @@ export default class JunctionTree {
     return propagater.getConsistentJunctionTree();
   }
 
-  private marginalize() {
-    // Compute P(V) for each variable of intrest V as follows
-    // 1. Identify a cluster (or subset) X that contains V
-    // 2. Compute P(V) by marginalizing sigmax according to equation (3.3), P(V) = sum(...)
+  public marginalize(entity: IEntity) {
+    const margPotentials = this.marginalizer.marginalize(entity);
+
+    console.log(margPotentials);
   }
 }

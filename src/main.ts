@@ -83,3 +83,5 @@ dag.displayMatrix();
 const bnet = new BayesianNetwork(entityMap, dag);
 
 const jtree = new JunctionTree(bnet);
+
+jtree.marginalize(entityA);

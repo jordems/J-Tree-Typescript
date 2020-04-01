@@ -22,32 +22,28 @@ export default class Propagater {
   private propagate(
     inconsistentJunctionTree: Forest<IClique | ISepSet>
   ): Forest<IClique | ISepSet> {
-    // Deep Copy of inconsistent Junction Tree
-    let consistentJunctionTree: Forest<IClique | ISepSet> = cloneDeep(
-      inconsistentJunctionTree
-    );
-
     // Global Propagation
 
     // 1. Choose an arbitrary cluster X
-    const clusterX = consistentJunctionTree.getRandomCluster() as GraphEntity<
+    let clusterX = inconsistentJunctionTree.getRandomCluster() as GraphEntity<
       IClique
     >;
     console.log("Chose arbitrary cluster", clusterX);
     // 2. Unmark all clusters. Call Collect-Evidence(X)
-    consistentJunctionTree.unmarkAll();
-    this.collectEvidence(consistentJunctionTree, clusterX);
+    inconsistentJunctionTree.unmarkAll();
+    this.collectEvidence(inconsistentJunctionTree, clusterX);
 
     // 3. Unmark all clusters. Call Distrubite-Evidence(X).
-    consistentJunctionTree.unmarkAll();
-    this.distrubuteEvidence(consistentJunctionTree, clusterX);
+    inconsistentJunctionTree.unmarkAll();
+    this.distrubuteEvidence(inconsistentJunctionTree, clusterX);
 
-    // Normalize results to fit
+    // Normalize results to fit with sum probability of 1
 
-    this.normalize(consistentJunctionTree);
+    this.normalize(inconsistentJunctionTree);
 
-    console.log("consistentJTRee", consistentJunctionTree.toString());
-    return consistentJunctionTree;
+    //console.log("consistentJTRee", inconsistentJunctionTree.toString());
+
+    return inconsistentJunctionTree;
   }
 
   private passMessage(
