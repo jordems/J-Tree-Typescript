@@ -12,5 +12,3 @@ export interface CPTCondition {
 }
 
 export type ICPT = CPTCondition[];
-
-export default ICPT;

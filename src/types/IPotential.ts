@@ -1,8 +1,6 @@
-import { DependancyContitions } from "./ICPT";
+import { DependancyContitions } from "./";
 
 export interface IPotential {
   if: DependancyContitions;
   then: number; // Probaility
 }
-
-export default IPotential;

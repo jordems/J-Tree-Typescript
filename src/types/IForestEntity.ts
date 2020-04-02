@@ -1,6 +1,6 @@
-import IPotential from "./IPotential";
+import { IPotential } from "./";
 
-export default interface IForestEntity {
+export interface IForestEntity {
   id: string;
   potentials?: IPotential[];
   oldPotentials?: IPotential[];

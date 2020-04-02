@@ -5,12 +5,10 @@ interface GenericType {
 export default class GraphEntity<T extends GenericType> {
   private entity: T;
   private edges: { [entityid: string]: T };
-  private value: number;
 
-  constructor(entity: T, value: number) {
+  constructor(entity: T) {
     this.entity = entity;
     this.edges = {};
-    this.value = value;
   }
 
   public getID(): string {
@@ -39,10 +37,6 @@ export default class GraphEntity<T extends GenericType> {
 
   public setEntity(entity: T): void {
     this.entity = entity;
-  }
-
-  public getValue(): number {
-    return this.value;
   }
 
   public toString = (): string => {

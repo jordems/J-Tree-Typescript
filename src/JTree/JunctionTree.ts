@@ -3,11 +3,7 @@ import BayesianNetwork from "../BayesianNetwork";
 import GraphicalTransformer from "./GraphicalTransformer";
 import Initializer from "./Initializer";
 import Forest from "../graphstructures/Forest";
-import IClique from "../types/IClique";
-import ISepSet from "../types/ISepSet";
-import IEntity from "../types/IEntity";
-import IPotential from "../types/IPotential";
-import ICPT from "../types/ICPT";
+import { IClique, ISepSet, IEntity } from "../types";
 import Propagater from "./Propagater";
 import Marginalizer from "./Marginalizer";
 
@@ -18,8 +14,7 @@ export default class JunctionTree {
     this.entityMap = bnet.getEntityMap();
 
     // Graphical Transformation of bayesnet into Optimized Junction Tree
-    const graphicalTransformer = new GraphicalTransformer(bnet);
-    const optimizedJunctionTree = graphicalTransformer.getOptimizedJunctionTree();
+    const optimizedJunctionTree = this.transform(bnet);
 
     // Initialization to create an Inconsistent Junction Tree
     const inconsistentJunctionTree = this.initialize(optimizedJunctionTree);
@@ -31,17 +26,20 @@ export default class JunctionTree {
     this.marginalizer = new Marginalizer(consistentJunctionTree);
   }
 
+  private transform(bnet: BayesianNetwork): Forest<IClique | ISepSet> {
+    const graphicalTransformer = new GraphicalTransformer(bnet);
+    return graphicalTransformer.getOptimizedJunctionTree();
+  }
+
   private initialize(
     optimizedJunctionTree: Forest<IClique | ISepSet>
   ): Forest<IClique | ISepSet> {
     const initializer = new Initializer(optimizedJunctionTree, this.entityMap);
-
     return initializer.getInconsistentJunctionTree();
   }
 
   private propogate(inconsistentJunctionTree: Forest<IClique | ISepSet>) {
     const propagater = new Propagater(inconsistentJunctionTree, this.entityMap);
-
     return propagater.getConsistentJunctionTree();
   }
 

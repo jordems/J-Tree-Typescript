@@ -1,11 +1,5 @@
-import { cloneDeep } from "lodash";
-
-import IEntity from "../types/IEntity";
-import ISepSet from "../types/ISepSet";
-import IClique from "../types/IClique";
+import { IEntity, ISepSet, IClique, IPotential } from "../types";
 import Forest from "../graphstructures/Forest";
-import IPotential from "../types/IPotential";
-import GraphEntity from "../graphstructures/GraphEntity";
 
 export default class Marginalizer {
   private consistentJunctionTree: Forest<IClique | ISepSet>;

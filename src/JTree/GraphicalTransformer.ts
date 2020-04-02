@@ -1,29 +1,25 @@
 import { cloneDeep } from "lodash";
 
 import BayesianNetwork from "../BayesianNetwork";
-import IClique from "../types/IClique";
 import Forest from "../graphstructures/Forest";
-import { printMatrix } from "../PrintTools";
-import ISepSet from "../types/ISepSet";
-import IEntity from "../types/IEntity";
+import { IEntity, ISepSet, IClique } from "../types";
 import UnDirectedGraph from "../graphstructures/UnDirectedGraph";
 import GraphMoralizer from "../graphstructures/GraphMoralizer";
 
 export default class GraphicalTransformer {
   private optimizedJunctionTree: Forest<IClique | ISepSet>;
+  private entityMap: Map<string, IEntity>;
 
   constructor(bnet: BayesianNetwork) {
+    this.entityMap = bnet.getEntityMap();
+
     const moralGraph = this.buildMoralGraph(bnet);
 
     const [triangulatedGraph, cliques] = this.buildTriangulatedGraph(
       moralGraph
     );
 
-    this.optimizedJunctionTree = this.buildOptimizedJunctionTree(
-      bnet,
-      triangulatedGraph,
-      cliques
-    );
+    this.optimizedJunctionTree = this.buildOptimizedJunctionTree(bnet, cliques);
   }
 
   /**
@@ -173,10 +169,11 @@ export default class GraphicalTransformer {
         // Seems that they did this in the research paper that we are following (Inference in Belief Networks: A Procedural Guide)
         let minPlace = Infinity;
         for (let x = 0; x < valueswithMinWeight.length; x++) {
-          const curPlace = moralGraphCopy
-            .get(valueswithMinWeight[x])
-            .getValue();
-          if (curPlace < minPlace) {
+          const curPlace = this.getValueFromStart(
+            moralGraphCopy.get(valueswithMinWeight[x]).getEntity()
+          );
+          console.log("curPlace", valueswithMinWeight[x], curPlace);
+          if (curPlace <= minPlace) {
             minPlace = curPlace;
             idxToRemove = valueswithMinWeight[x];
           }
@@ -247,13 +244,32 @@ export default class GraphicalTransformer {
     return [triangulatedGraph, cliques];
   }
 
+  private getValueFromStart(entity: IEntity, count?: number): number {
+    let tCount = count;
+
+    if (tCount === undefined) {
+      tCount = 0;
+    }
+
+    const entities = this.entityMap.values();
+    for (const tent of entities) {
+      if (
+        tent.deps &&
+        tent.deps.filter(ent => ent.id === entity.id).length > 0
+      ) {
+        tCount++;
+        tCount += this.getValueFromStart(tent, tCount);
+      }
+    }
+    return tCount;
+  }
+
   /**
    * Using Cliques from Graph Triangulation Build to create Optimized Join Tree
    * @returns OptimizedJunctionTree
    */
   private buildOptimizedJunctionTree(
     bnet: BayesianNetwork,
-    triangulatedGraph: UnDirectedGraph<IEntity>,
     cliques: IClique[]
   ): Forest<IClique | ISepSet> {
     const entityMap = bnet.getEntityMap();
@@ -316,8 +332,6 @@ export default class GraphicalTransformer {
         }
       }
     }
-    // console.log(cliqueTree);
-    // console.log(Petha);
 
     const nextFromPetha = (
       Petha: ISepSet[],
@@ -340,7 +354,6 @@ export default class GraphicalTransformer {
           possibleSepSets.push(Petha[x]);
         }
       }
-      //console.log("PossibleSubseds", possibleSepSets);
 
       //      Cost: of a sepset S(xy) is the weight of X Plus the weight of Y, where weight is defined as follows:
       //          The weight of a variable V is the number of values of V
@@ -390,11 +403,11 @@ export default class GraphicalTransformer {
         }
       }
 
-      //console.log("PossibleSepSetsWeighted", possibleSepSetsWeighted);
       return possibleSepSetsWeighted[0];
     };
 
-    for (let x = 0; x < Petha.length - 1; x++) {
+    let sepSetInsertCount = 0;
+    for (let x = 0; x < Petha.length; x++) {
       const sepSet = nextFromPetha(Petha, cliques, entityMap);
 
       const idxOfsepSet = Petha.indexOf(sepSet);
@@ -411,9 +424,14 @@ export default class GraphicalTransformer {
         cliqueForest.set(sepSet);
         cliqueForest.addEdge(cliqueX, sepSet);
         cliqueForest.addEdge(cliqueY, sepSet);
+        sepSetInsertCount++;
+      }
+      // Repeat until n-1 sepsets have been inserted into the forest
+      if (sepSetInsertCount >= cliques.length - 1) {
+        break;
       }
     }
-    //console.log(cliqueForest.toString());
+
     return cliqueForest;
   }
 

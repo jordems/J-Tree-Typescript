@@ -1,11 +1,11 @@
-import { cloneDeep } from "lodash";
-
 import Forest from "../graphstructures/Forest";
-import IClique from "../types/IClique";
-import ISepSet from "../types/ISepSet";
-import IPotential from "../types/IPotential";
-import IEntity from "../types/IEntity";
-import { DependancyContitions } from "../types/ICPT";
+import {
+  IClique,
+  ISepSet,
+  IPotential,
+  IEntity,
+  DependancyContitions
+} from "../types";
 
 export default class Initializer {
   private inconsistentJunctionTree: Forest<IClique | ISepSet>;

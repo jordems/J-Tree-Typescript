@@ -1,6 +1,6 @@
-import IForestEntity from "./IForestEntity";
+import { IForestEntity } from "./";
 
-export default interface IClique extends IForestEntity {
+export interface IClique extends IForestEntity {
   id: string;
   entityIDs: string[];
   isSepSet: false;

@@ -1,4 +1,4 @@
-import IEntity from "./types/IEntity";
+import { IEntity } from "./types";
 import DirectedGraph from "./graphstructures/DirectedGraph";
 
 export default class DagBuilder {

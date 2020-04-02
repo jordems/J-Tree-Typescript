@@ -1,5 +1,4 @@
-import IPotential from "../types/IPotential";
-import IForestEntity from "../types/IForestEntity";
+import { IPotential, IForestEntity } from "../types";
 import UnDirectedGraph from "./UnDirectedGraph";
 import GraphEntity from "./GraphEntity";
 

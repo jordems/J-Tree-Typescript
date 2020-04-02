@@ -1,6 +1,6 @@
-import IForestEntity from "./IForestEntity";
+import { IForestEntity } from "./";
 
-export default interface ISepSet extends IForestEntity {
+export interface ISepSet extends IForestEntity {
   id: string;
   cliqueXID: string;
   cliqueYID: string;

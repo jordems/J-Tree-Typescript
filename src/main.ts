@@ -1,4 +1,4 @@
-import IEntity from "./types/IEntity";
+import { IEntity } from "./types";
 import DagBuilder from "./DagBuilder";
 import BayesianNetwork from "./BayesianNetwork";
 import { CPTBuilder } from "./CPTBuilder";

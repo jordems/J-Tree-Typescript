@@ -1,6 +1,6 @@
-import ICPT from "./ICPT";
+import { ICPT } from "./";
 
-export default interface IEntity {
+export interface IEntity {
   id: string;
   states: string[];
   deps?: IEntity[];

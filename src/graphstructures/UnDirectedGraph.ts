@@ -1,4 +1,4 @@
-import IGeneralGraph from "../types/IGeneralGraph";
+import { IGeneralGraph } from "../types";
 import DirectedGraph from "./DirectedGraph";
 
 interface GenericType {

@@ -1,53 +1,46 @@
-import { cloneDeep } from "lodash";
-
-import IEntity from "../types/IEntity";
-import ISepSet from "../types/ISepSet";
-import IClique from "../types/IClique";
+import { IEntity, ISepSet, IClique, IPotential } from "../types";
 import Forest from "../graphstructures/Forest";
-import IPotential from "../types/IPotential";
 import GraphEntity from "../graphstructures/GraphEntity";
 
 export default class Propagater {
   private entityMap: Map<string, IEntity>;
+  private inconsistentJunctionTree: Forest<IClique | ISepSet>;
   private consistentJunctionTree: Forest<IClique | ISepSet>;
   constructor(
     inconsistentJunctionTree: Forest<IClique | ISepSet>,
     entityMap: Map<string, IEntity>
   ) {
     this.entityMap = entityMap;
-
-    this.consistentJunctionTree = this.propagate(inconsistentJunctionTree);
+    this.inconsistentJunctionTree = inconsistentJunctionTree;
+    this.consistentJunctionTree = this.propagate();
   }
 
-  private propagate(
-    inconsistentJunctionTree: Forest<IClique | ISepSet>
-  ): Forest<IClique | ISepSet> {
+  private propagate(): Forest<IClique | ISepSet> {
     // Global Propagation
 
     // 1. Choose an arbitrary cluster X
-    let clusterX = inconsistentJunctionTree.getRandomCluster() as GraphEntity<
+    let clusterX = this.inconsistentJunctionTree.getRandomCluster() as GraphEntity<
       IClique
     >;
     console.log("Chose arbitrary cluster", clusterX);
     // 2. Unmark all clusters. Call Collect-Evidence(X)
-    inconsistentJunctionTree.unmarkAll();
-    this.collectEvidence(inconsistentJunctionTree, clusterX);
+    this.inconsistentJunctionTree.unmarkAll();
+    this.collectEvidence(clusterX);
 
     // 3. Unmark all clusters. Call Distrubite-Evidence(X).
-    inconsistentJunctionTree.unmarkAll();
-    this.distrubuteEvidence(inconsistentJunctionTree, clusterX);
+    this.inconsistentJunctionTree.unmarkAll();
+    this.distrubuteEvidence(clusterX);
 
     // Normalize results to fit with sum probability of 1
 
-    this.normalize(inconsistentJunctionTree);
+    //this.normalize(this.inconsistentJunctionTree);
 
     //console.log("consistentJTRee", inconsistentJunctionTree.toString());
 
-    return inconsistentJunctionTree;
+    return this.inconsistentJunctionTree;
   }
 
   private passMessage(
-    jTree: Forest<IClique | ISepSet>,
     clusterX: GraphEntity<IClique>,
     sepsetR: GraphEntity<ISepSet>,
     clusterY: GraphEntity<IClique>
@@ -63,29 +56,32 @@ export default class Propagater {
     let projPotential: IPotential[] = [];
 
     // Projection: Assign a new table to R saveing the old table.
-    sigmaR.forEach(vX => {
-      const entities = Object.keys(vX);
+    for (const vX of sigmaR) {
+      const entities = Object.keys(vX.if);
 
       let newPotential: number = 0;
-      sigmaX.forEach((sigX, idx) => {
+      for (const sigX of sigmaX) {
         let isIntersect = true;
-        entities.forEach(entity => {
-          if (!(entity in sigX.if)) {
+        for (const entity of entities) {
+          if (!(entity in sigX.if) || !(sigX.if[entity] === vX.if[entity])) {
             isIntersect = false;
           }
-        });
+        }
         if (isIntersect) {
           newPotential += sigX.then;
         }
-      });
+      }
       projPotential.push({ if: vX.if, then: newPotential });
-    });
+    }
 
-    jTree.addPotentials(sepsetR.getEntity(), projPotential);
+    this.inconsistentJunctionTree.addPotentials(
+      sepsetR.getEntity(),
+      projPotential
+    );
 
     let absorbPotential: IPotential[] = [];
 
-    //TODO Absorption. Assign a new table to Y, using both the old and the new tables of R.
+    // Absorption. Assign a new table to Y, using both the old and the new tables of R.
     const sigR = sepsetR.getEntity().potentials;
     const oldsigR = sepsetR.getEntity().oldPotentials;
     const sigY = clusterY.getEntity().potentials;
@@ -104,14 +100,14 @@ export default class Propagater {
     });
 
     sigY.forEach(sY => {
-      //TODO absorbPotentials = SigY * Sig divRpotentials
-      const entities = Object.keys(sY);
+      //absorbPotentials = SigY * Sig divRpotentials
+      const entities = Object.keys(sY.if);
 
       let newPotential: number = sY.then;
       sigR.forEach(sR => {
         let isIntersect = true;
         entities.forEach(entity => {
-          if (!(entity in sR.if)) {
+          if (!(entity in sR.if) || !(sY.if[entity] === sR.if[entity])) {
             isIntersect = false;
           }
         });
@@ -122,43 +118,39 @@ export default class Propagater {
       absorbPotential.push({ if: sY.if, then: newPotential });
     });
 
-    jTree.addPotentials(clusterY.getEntity(), absorbPotential);
+    this.inconsistentJunctionTree.addPotentials(
+      clusterY.getEntity(),
+      absorbPotential
+    );
   }
 
-  private collectEvidence(
-    jTree: Forest<IClique | ISepSet>,
-    clusterX: GraphEntity<IClique>
-  ) {
+  private collectEvidence(clusterX: GraphEntity<IClique>) {
     console.log("collectEvidence", clusterX);
     // Mark X
-    jTree.markEntity(clusterX.getEntity());
+    this.inconsistentJunctionTree.markEntity(clusterX.getEntity());
     // Call collectEvidence recursively on X's unmarked neighboring clusters, if any
-    const neighboringClusters = jTree.getNeighboringClusters(
+    const neighboringClusters = this.inconsistentJunctionTree.getNeighboringClusters(
       clusterX.getEntity()
     );
 
-    neighboringClusters.forEach(({ neighborCluster, fromSepset }) => {
+    for (const { neighborCluster, fromSepset } of neighboringClusters) {
       if (!neighborCluster.getEntity().marked) {
-        this.collectEvidence(jTree, neighborCluster as GraphEntity<IClique>);
+        this.collectEvidence(neighborCluster as GraphEntity<IClique>);
 
         // Pass a message from X to the cluster which invoked collectEvidence
         this.passMessage(
-          jTree,
           clusterX,
           fromSepset as GraphEntity<ISepSet>,
           neighborCluster as GraphEntity<IClique>
         );
       }
-    });
+    }
   }
-  private distrubuteEvidence(
-    jTree: Forest<IClique | ISepSet>,
-    clusterX: GraphEntity<IClique>
-  ) {
+  private distrubuteEvidence(clusterX: GraphEntity<IClique>) {
     // Mark X
-    jTree.markEntity(clusterX.getEntity());
+    this.inconsistentJunctionTree.markEntity(clusterX.getEntity());
     // Pass a message from X to each of its unmarked neighboring clusters, if any
-    const neighboringClusters = jTree.getNeighboringClusters(
+    const neighboringClusters = this.inconsistentJunctionTree.getNeighboringClusters(
       clusterX.getEntity()
     );
 
@@ -166,14 +158,13 @@ export default class Propagater {
       if (!neighborCluster.getEntity().marked) {
         // Pass a message from X to the cluster which invoked collectEvidence
         this.passMessage(
-          jTree,
           clusterX,
           fromSepset as GraphEntity<ISepSet>,
           neighborCluster as GraphEntity<IClique>
         );
 
         // call distrubuteEvidence recursively on X's unmarked neighboring clusters, if any
-        this.distrubuteEvidence(jTree, neighborCluster as GraphEntity<IClique>);
+        this.distrubuteEvidence(neighborCluster as GraphEntity<IClique>);
       }
     });
   }
