@@ -1,10 +1,10 @@
 import { cloneDeep } from "lodash";
 
 import BayesianNetwork from "../../BayesianNetwork/BayesianNetwork";
-import Forest from "../../GraphStructures/Forest";
+import Forest from "../../GraphicalStructures/Forest";
 import { IEntity, ISepSet, IClique } from "../../types";
-import UnDirectedGraph from "../../GraphStructures/UnDirectedGraph";
-import GraphMoralizer from "../../GraphStructures/lib/GraphMoralizer";
+import UnDirectedGraph from "../../GraphicalStructures/UnDirectedGraph";
+import GraphMoralizer from "../../GraphicalStructures/lib/GraphMoralizer";
 
 export default class GraphicalTransformer {
   private optimizedJunctionTree: Forest<IClique | ISepSet>;
