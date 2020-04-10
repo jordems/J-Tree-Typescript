@@ -1,5 +1,5 @@
-import { IEntity } from "./types";
-import DirectedGraph from "./graphstructures/DirectedGraph";
+import { IEntity } from "../types";
+import DirectedGraph from "../GraphStructures/DirectedGraph";
 
 export default class BayesianNetwork {
   private dag: DirectedGraph<IEntity>;

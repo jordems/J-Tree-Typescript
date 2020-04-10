@@ -1,5 +1,5 @@
 import { IGeneralGraph } from "../types";
-import GraphEntity from "./GraphEntity";
+import GraphEntity from "./lib/GraphEntity";
 
 interface GenericType {
   id: string;
@@ -30,7 +30,7 @@ export default class DirectedGraph<T extends GenericType>
   public remove(entity: T): void {
     delete this.graphEntities[entity.id];
 
-    this.getValues().forEach(graphEntity => {
+    this.getValues().forEach((graphEntity) => {
       if (graphEntity.hasEdge(entity)) {
         graphEntity.removeDirectEdge(entity);
       }
@@ -74,7 +74,7 @@ export default class DirectedGraph<T extends GenericType>
   public toString = (): string => {
     let string = "Graph Printout:\n\n";
 
-    Object.keys(this.graphEntities).forEach(treeKey => {
+    Object.keys(this.graphEntities).forEach((treeKey) => {
       string += this.graphEntities[treeKey] + "\n";
     });
 
@@ -86,10 +86,10 @@ export default class DirectedGraph<T extends GenericType>
     console.log("Displaying Graph Matrix");
     let col = "  ";
     let res = "";
-    this.getValues().forEach(r => {
+    this.getValues().forEach((r) => {
       col += r.getID() + " ";
       let row = r.getID() + " ";
-      this.getValues().forEach(c => {
+      this.getValues().forEach((c) => {
         row += r.hasEdge(c.getEntity()) ? "1 " : "0 ";
       });
       res += row + "\n";

@@ -1,6 +1,6 @@
 import { IPotential, IForestEntity } from "../types";
 import UnDirectedGraph from "./UnDirectedGraph";
-import GraphEntity from "./GraphEntity";
+import GraphEntity from "./lib/GraphEntity";
 
 /**
  * @class Forest
@@ -15,7 +15,7 @@ export default class Forest<T extends IForestEntity> extends UnDirectedGraph<
 
   public getRandomCluster(): GraphEntity<T> {
     let possibleClusterIDs: string[] = [];
-    this.getIDs().forEach(treeEntityID => {
+    this.getIDs().forEach((treeEntityID) => {
       if (!this.get(treeEntityID).getEntity().isSepSet) {
         possibleClusterIDs.push(treeEntityID);
       }
@@ -42,18 +42,18 @@ export default class Forest<T extends IForestEntity> extends UnDirectedGraph<
     }
     const sepSetEntityies = treeEntity.getEdges();
 
-    sepSetEntityies?.forEach(sepSet => {
+    sepSetEntityies?.forEach((sepSet) => {
       const sepSetTreeEntity = this.get(sepSet);
       if (sepSetTreeEntity) {
         const posneighbors = sepSetTreeEntity.getEdges();
 
-        posneighbors?.forEach(posneighbor => {
+        posneighbors?.forEach((posneighbor) => {
           if (posneighbor !== entity) {
             const neighbor = this.get(posneighbor);
             if (neighbor) {
               neighboringClusters.push({
                 neighborCluster: neighbor,
-                fromSepset: sepSetTreeEntity
+                fromSepset: sepSetTreeEntity,
               });
             }
           }
@@ -78,7 +78,7 @@ export default class Forest<T extends IForestEntity> extends UnDirectedGraph<
   }
 
   public unmarkAll(): void {
-    this.getIDs().forEach(entityKey => {
+    this.getIDs().forEach((entityKey) => {
       let currentEntity = this.get(entityKey).getEntity();
       currentEntity.marked = false;
       this.get(entityKey).setEntity(currentEntity);
@@ -88,7 +88,7 @@ export default class Forest<T extends IForestEntity> extends UnDirectedGraph<
   public isOnSameTree(entityA: T, entityB: T): boolean {
     let entitysChecked: T[] = [];
     const edgesOnTreeEntityA = this.get(entityA.id).getEdges();
-    edgesOnTreeEntityA?.forEach(entity => {
+    edgesOnTreeEntityA?.forEach((entity) => {
       if (entity.id === entityB.id) {
         return true;
       } else {
@@ -101,4 +101,36 @@ export default class Forest<T extends IForestEntity> extends UnDirectedGraph<
 
     return false;
   }
+
+  // @Override
+  public toString = (): string => {
+    let string = "\n--Forest Printout--\n";
+
+    for (const graphEntity of this.getValues()) {
+      const entity = graphEntity.getEntity();
+      if (entity.isSepSet) {
+        // Get edges id's
+        let edgeIDs: string[] = [];
+        for (const edge of graphEntity.getEdges()) {
+          //@ts-ignore
+          edgeIDs.push("Cluster[" + edge.entityIDs + "]");
+        }
+
+        //@ts-ignore
+        string += `SepSet[${entity.intersectingentityIDs}] HAS Edges: ${edgeIDs}\n`;
+      } else {
+        // Get edges id's
+        let edgeIDs: string[] = [];
+        for (const edge of graphEntity.getEdges()) {
+          //@ts-ignore
+          edgeIDs.push("SepSet[" + edge.intersectingentityIDs + "]");
+        }
+
+        //@ts-ignore
+        string += `Cluster[${entity.entityIDs}] HAS Edges: ${edgeIDs}\n`;
+      }
+    }
+
+    return string;
+  };
 }

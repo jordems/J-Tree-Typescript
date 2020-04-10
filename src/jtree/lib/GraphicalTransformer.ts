@@ -1,10 +1,10 @@
 import { cloneDeep } from "lodash";
 
-import BayesianNetwork from "../BayesianNetwork";
-import Forest from "../graphstructures/Forest";
-import { IEntity, ISepSet, IClique } from "../types";
-import UnDirectedGraph from "../graphstructures/UnDirectedGraph";
-import GraphMoralizer from "../graphstructures/GraphMoralizer";
+import BayesianNetwork from "../../BayesianNetwork/BayesianNetwork";
+import Forest from "../../GraphStructures/Forest";
+import { IEntity, ISepSet, IClique } from "../../types";
+import UnDirectedGraph from "../../GraphStructures/UnDirectedGraph";
+import GraphMoralizer from "../../GraphStructures/lib/GraphMoralizer";
 
 export default class GraphicalTransformer {
   private optimizedJunctionTree: Forest<IClique | ISepSet>;
@@ -15,11 +15,15 @@ export default class GraphicalTransformer {
 
     const moralGraph = this.buildMoralGraph(bnet);
 
-    const [triangulatedGraph, cliques] = this.buildTriangulatedGraph(
-      moralGraph
-    );
+    console.log("\n\n--Starting Graphical Triangulation--\n");
+    const cliques = this.buildTriangulatedGraph(moralGraph);
+    console.log("\n--Finished Graphical Triangulation--\n");
 
+    console.log("\n\n--Starting J Tree Optimization--\n");
     this.optimizedJunctionTree = this.buildOptimizedJunctionTree(bnet, cliques);
+
+    console.log(this.optimizedJunctionTree.toString());
+    console.log("\n--Finished J Tree Optimization--\n");
   }
 
   /**
@@ -39,9 +43,9 @@ export default class GraphicalTransformer {
     // First we must find each of the parents
     const entityMap = bnet.getEntityMap();
     const entityParents: { [entityID: string]: string[] } = {};
-    entityMap.forEach(entity => {
+    entityMap.forEach((entity) => {
       if (entity.deps) {
-        entity.deps.forEach(depEntity => {
+        entity.deps.forEach((depEntity) => {
           if (!(depEntity.id in entityParents)) {
             entityParents[depEntity.id] = [];
           }
@@ -52,7 +56,7 @@ export default class GraphicalTransformer {
 
     // Check if each entity has more than one parent, if so connect all parents
 
-    Object.keys(entityParents).forEach(entityChildKey => {
+    Object.keys(entityParents).forEach((entityChildKey) => {
       const entitiesParents = entityParents[entityChildKey];
 
       if (entitiesParents.length > 1) {
@@ -68,32 +72,34 @@ export default class GraphicalTransformer {
       }
     });
 
-    console.log("Moral Graph");
+    console.log("\n\n----Moral Graph----\n");
     undirectedGraph.displayMatrix();
     return undirectedGraph;
   }
 
   /**
    * Builds Triangulated Graph from Moral Graph and also finds Cliques
-   * @returns  [TriangulatedGraph, Cliques]
+   * Considering we don't care about the triangulated graph we only return the cliques
+   * @returns Cliques
    */
   private buildTriangulatedGraph(
     moralGraph: UnDirectedGraph<IEntity>
-  ): [UnDirectedGraph<IEntity>, IClique[]] {
-    let moralGraphCopy = cloneDeep(moralGraph); // Create Deep Copy of moralGraph
-    let triangulatedGraph = cloneDeep(moralGraph); // Create Deep Copy of moralGraph
+  ): IClique[] {
+    let moralGraphCopy = cloneDeep(moralGraph); // Create Copy of moralGraph
+    let triangulatedGraph = cloneDeep(moralGraph); // init triangulatedGraph
 
     let inducedClusters: IClique[] = []; // report induced Clusters for when building Clinques
-
     // While moralGraphCopy is not empty
     while (moralGraphCopy.getIDs().length > 0) {
       let idxToRemove: string = "";
       //    Select a entity V from moralGraphCopy according to:
-      //      Weight of entity V  is the number of values of V. IN our case number of elements in CPT array.
-      //      Weight of cluster is the product of the weights of the entites with
-      //      **When selecting entities to remove: Choose the entity that causes the least number of edges to be added in the next step,
+      //      Choose the entity that causes the least number of edges to be added in the next step,
+      //      But if tie breaker, then pick induced cluster with smallest weight
+      //        Weight of entity V  is the number of values of V. IN our case number of elements in CPT array.
+      //        Weight of cluster is the product of the weights of the entites with
+
       let entityEdgesAddedCount: { [entityid: string]: number } = {};
-      moralGraphCopy.getValues().forEach(curGraphentity => {
+      for (const curGraphentity of moralGraphCopy.getValues()) {
         const curEntity = curGraphentity.getEntity();
 
         // init Count
@@ -105,20 +111,19 @@ export default class GraphicalTransformer {
         const neightbors = curGraphentity.getEdges();
 
         // Count how many edges would be added
-        neightbors?.forEach(n1 => {
-          neightbors?.forEach(n2 => {
+        neightbors?.forEach((n1) => {
+          neightbors?.forEach((n2) => {
             if (n1.id !== n2.id && !moralGraphCopy.get(n1).hasEdge(n2)) {
               entityEdgesAddedCount[curEntity.id] += 1;
             }
           });
         });
-      });
+      }
 
       // Get Entites with lowest amount of edges added
       const lowestEdgeCountIds: string[] = [];
       const minEdgeCount = Math.min(...Object.values(entityEdgesAddedCount));
-      Object.keys(entityEdgesAddedCount).forEach(entityID => {
-        console.log("Count ", entityID, entityEdgesAddedCount[entityID]);
+      Object.keys(entityEdgesAddedCount).forEach((entityID) => {
         if (minEdgeCount === entityEdgesAddedCount[entityID]) {
           lowestEdgeCountIds.push(entityID);
         }
@@ -140,9 +145,8 @@ export default class GraphicalTransformer {
           const neightbors = graphEntity.getEdges();
 
           let clusterWeights: number[] = [];
-          let nstr = "";
-          neightbors?.forEach(neighborEntity => {
-            nstr += neighborEntity.id + ", ";
+
+          for (const neighborEntity of neightbors) {
             clusterWeights.push(
               neighborEntity.cpt &&
                 neighborEntity.cpt.length !== 0 &&
@@ -151,12 +155,9 @@ export default class GraphicalTransformer {
                     Object.keys(neighborEntity.cpt[0].if).length
                 : 0
             );
-          });
+          }
           // Get Weight of Cluster
           const weight = clusterWeights.reduce((a, b) => a * b);
-
-          console.log(idx, weight, clusterWeights, nstr);
-          //console.log(neightbors);
 
           if (weight === minWeight) {
             valueswithMinWeight.push(idx);
@@ -172,7 +173,6 @@ export default class GraphicalTransformer {
           const curPlace = this.getValueFromStart(
             moralGraphCopy.get(valueswithMinWeight[x]).getEntity()
           );
-          console.log("curPlace", valueswithMinWeight[x], curPlace);
           if (curPlace <= minPlace) {
             minPlace = curPlace;
             idxToRemove = valueswithMinWeight[x];
@@ -180,7 +180,7 @@ export default class GraphicalTransformer {
         }
       }
       console.log("Triangulation Removeing idx", idxToRemove);
-      console.log("cycle");
+
       //    With the entity V selected
       const selectedGraphEntity = moralGraphCopy.get(idxToRemove);
       //    Get its neighbors and, this forms a cluster
@@ -188,10 +188,10 @@ export default class GraphicalTransformer {
       let inducedCluster: IClique = {
         id: idxToRemove,
         entityIDs: [idxToRemove],
-        isSepSet: false
+        isSepSet: false,
       };
 
-      selectedGraphEntity.getEdges()?.forEach(n => {
+      selectedGraphEntity.getEdges()?.forEach((n) => {
         inducedCluster.id += n.id;
         inducedCluster.entityIDs.push(n.id);
       });
@@ -200,8 +200,8 @@ export default class GraphicalTransformer {
       inducedClusters.push(inducedCluster);
 
       //    Connect all nodes in this cluster, for each new edge added to moralGraphCopy add this edge to the triangulatedGraph
-      selectedGraphEntity.getEdges()?.forEach(n1 => {
-        selectedGraphEntity.getEdges()?.forEach(n2 => {
+      selectedGraphEntity.getEdges()?.forEach((n1) => {
+        selectedGraphEntity.getEdges()?.forEach((n2) => {
           if (n1.id !== n2.id) {
             moralGraphCopy.addEdge(n1, n2);
 
@@ -214,9 +214,13 @@ export default class GraphicalTransformer {
       moralGraphCopy.remove(moralGraphCopy.get(idxToRemove).getEntity());
     }
 
-    console.log("triangulatedGraph");
+    console.log("\n--Triangulated Graph--");
     triangulatedGraph.displayMatrix();
-    console.log("inducedClusters", inducedClusters);
+
+    console.log("Found InducedClusters:");
+    inducedClusters.forEach((inducedCluster) => {
+      console.log(`Cluster[${inducedCluster.entityIDs}]`);
+    });
 
     // Remove any subset induced Clusters and generate cliques
     let cliques: IClique[] = [];
@@ -227,7 +231,7 @@ export default class GraphicalTransformer {
         let simCount = 0;
         const entitiesinX = inducedClusters[x].entityIDs;
         const entitiesinY = inducedClusters[y].entityIDs;
-        entitiesinX.forEach(entity => {
+        entitiesinX.forEach((entity) => {
           if (entitiesinY.includes(entity)) {
             simCount++;
           }
@@ -239,11 +243,19 @@ export default class GraphicalTransformer {
       }
     }
 
-    console.log("cliques", cliques);
+    console.log("\nFound Cliques:");
+    cliques.forEach((clique) => {
+      console.log(`Cluster[${clique.entityIDs}]`);
+    });
 
-    return [triangulatedGraph, cliques];
+    return cliques;
   }
 
+  /**
+   * Help function for buildTriangulated Graph to
+   * @param entity IEntity
+   * @param count? current count
+   */
   private getValueFromStart(entity: IEntity, count?: number): number {
     let tCount = count;
 
@@ -255,7 +267,7 @@ export default class GraphicalTransformer {
     for (const tent of entities) {
       if (
         tent.deps &&
-        tent.deps.filter(ent => ent.id === entity.id).length > 0
+        tent.deps.filter((ent) => ent.id === entity.id).length > 0
       ) {
         tCount++;
         tCount += this.getValueFromStart(tent, tCount);
@@ -274,28 +286,29 @@ export default class GraphicalTransformer {
   ): Forest<IClique | ISepSet> {
     const entityMap = bnet.getEntityMap();
 
-    // Begin with a set of n trees, each consisting of a single clique, and an empty set cliqueTree
+    // Begin with a set of n trees, each consisting of a single clique
     let cliqueForest = new Forest<IClique | ISepSet>();
-
-    cliques.forEach(clique => {
+    for (const clique of cliques) {
       cliqueForest.set(clique);
-    });
+    }
 
-    let cliqueTree: { [cliqueID: string]: { [cliqueID: string]: number } } = {};
+    // Use cliqueDistinct to make sure pairs are distinct for
+    let cliqueDistinct: {
+      [cliqueID: string]: { [cliqueID: string]: number };
+    } = {};
     let Petha: ISepSet[] = [];
 
     // For each distinct pair of cliques X and Y:
     //  a) create a candidate sepset, Labeled X intersection Y with backpointers to the cliques X and Y. Refer to this sepset as S(XY)
     //  b) Insert S(XY) into Petha
-    // Repeat until n-1 sepsets have been inserted into the forest
     for (let x = 0; x < cliques.length; x++) {
       for (let y = 0; y < cliques.length; y++) {
         // Init Object
-        if (!(cliques[x].id in cliqueTree)) {
-          cliqueTree[cliques[x].id] = {};
+        if (!(cliques[x].id in cliqueDistinct)) {
+          cliqueDistinct[cliques[x].id] = {};
         }
-        if (!(cliques[y].id in cliqueTree[cliques[x].id])) {
-          cliqueTree[cliques[x].id][cliques[y].id] = 0;
+        if (!(cliques[y].id in cliqueDistinct[cliques[x].id])) {
+          cliqueDistinct[cliques[x].id][cliques[y].id] = 0;
         }
 
         if (x !== y) {
@@ -311,12 +324,12 @@ export default class GraphicalTransformer {
             // Makes Distinct Pairs
             if (
               !(
-                cliques[y].id in cliqueTree &&
-                cliques[x].id in cliqueTree[cliques[y].id] &&
-                cliqueTree[cliques[y].id][cliques[x].id] === 1
+                cliques[y].id in cliqueDistinct &&
+                cliques[x].id in cliqueDistinct[cliques[y].id] &&
+                cliqueDistinct[cliques[y].id][cliques[x].id] === 1
               )
             ) {
-              cliqueTree[cliques[x].id][cliques[y].id] = 1;
+              cliqueDistinct[cliques[x].id][cliques[y].id] = 1;
 
               //cliqueForest.set(new TreeEntity(cliques[x], [cliques[y]]));
 
@@ -325,7 +338,7 @@ export default class GraphicalTransformer {
                 cliqueXID: cliques[x].id,
                 cliqueYID: cliques[y].id,
                 intersectingentityIDs: intersectingentityIDs,
-                isSepSet: true
+                isSepSet: true,
               });
             }
           }
@@ -342,7 +355,7 @@ export default class GraphicalTransformer {
       //    4.42 Mass and Cost
       //      Mass: of a sepset S(xy) is the number of variables it contains or number of variables in X intersection Y
 
-      // Choose Sepsets with smalls number of intersecting Entities
+      // Choose Sepsets with highest mass
       let maxMass = 0;
       let possibleSepSets: ISepSet[] = [];
       for (let x = 0; x < Petha.length; x++) {
@@ -369,9 +382,9 @@ export default class GraphicalTransformer {
         // Get Product Weight of CliqueA
         let weightA = 1;
         const cliqueA = cliques.filter(
-          clique => clique.id === possibleSepSets[x].cliqueXID
+          (clique) => clique.id === possibleSepSets[x].cliqueXID
         )[0];
-        cliqueA.entityIDs.forEach(entityid => {
+        cliqueA.entityIDs.forEach((entityid) => {
           const entity = entityMap.get(entityid);
           if (entity) {
             weightA *=
@@ -383,9 +396,9 @@ export default class GraphicalTransformer {
         // Get Product Weight of CliqueB
         let weightB = 1;
         const cliqueB = cliques.filter(
-          clique => clique.id === possibleSepSets[x].cliqueYID
+          (clique) => clique.id === possibleSepSets[x].cliqueYID
         )[0];
-        cliqueB.entityIDs.forEach(entityid => {
+        cliqueB.entityIDs.forEach((entityid) => {
           const entity = entityMap.get(entityid);
           if (entity) {
             weightB *=
@@ -407,7 +420,7 @@ export default class GraphicalTransformer {
     };
 
     let sepSetInsertCount = 0;
-    for (let x = 0; x < Petha.length; x++) {
+    while (sepSetInsertCount <= cliques.length - 1) {
       const sepSet = nextFromPetha(Petha, cliques, entityMap);
 
       const idxOfsepSet = Petha.indexOf(sepSet);
@@ -415,23 +428,27 @@ export default class GraphicalTransformer {
       //   b) Insert the sepset S(xy) between the cliques X and Y only if X and Y are on different trees in the forest.
       //    (Note the insertion of such a sepset will merge two trees into a larger tree)
 
-      const cliqueX = cliques.filter(cliq => cliq.id === sepSet.cliqueXID)[0];
+      const cliqueX = cliques.filter((cliq) => cliq.id === sepSet.cliqueXID)[0];
 
-      const cliqueY = cliques.filter(cliq => cliq.id === sepSet.cliqueYID)[0];
+      const cliqueY = cliques.filter((cliq) => cliq.id === sepSet.cliqueYID)[0];
 
       if (!cliqueForest.isOnSameTree(cliqueX, cliqueY)) {
-        console.log("Inserting ssClique", sepSet, cliqueX, cliqueY);
+        console.log(
+          `Inserting Sepset[${sepSet.intersectingentityIDs}] BETWEEN Cluster[${cliqueX.entityIDs}] and Cluster[${cliqueY.entityIDs}]`
+        );
         cliqueForest.set(sepSet);
         cliqueForest.addEdge(cliqueX, sepSet);
         cliqueForest.addEdge(cliqueY, sepSet);
         sepSetInsertCount++;
+      } else {
+        console.log(`On Same Tree: ${cliqueX.id}:${cliqueY.id}`);
       }
+
       // Repeat until n-1 sepsets have been inserted into the forest
       if (sepSetInsertCount >= cliques.length - 1) {
         break;
       }
     }
-
     return cliqueForest;
   }
 

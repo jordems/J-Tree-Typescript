@@ -1,11 +1,11 @@
-import Forest from "../graphstructures/Forest";
+import Forest from "../../GraphStructures/Forest";
 import {
   IClique,
   ISepSet,
   IPotential,
   IEntity,
-  DependancyContitions
-} from "../types";
+  DependancyContitions,
+} from "../../types";
 
 export default class Initializer {
   private inconsistentJunctionTree: Forest<IClique | ISepSet>;
@@ -15,7 +15,9 @@ export default class Initializer {
     entityMap: Map<string, IEntity>
   ) {
     this.entityMap = entityMap;
+    console.log("\n----Started Initialization----\n");
     this.inconsistentJunctionTree = this.initialize(optimizedJunctionTree);
+    console.log("\n----Finished Initialization----\n");
   }
 
   private initialize(
@@ -23,7 +25,7 @@ export default class Initializer {
   ): Forest<IClique | ISepSet> {
     // For each cluster and sepset X, set each sigmax(x) to 1
 
-    optimizedJunctionTree.getIDs().forEach(id => {
+    optimizedJunctionTree.getIDs().forEach((id) => {
       const entity = optimizedJunctionTree.get(id).getEntity();
       let potentials: IPotential[] = [];
 
@@ -35,6 +37,7 @@ export default class Initializer {
         const entitiesforPotentials = entity.entityIDs;
         potentials = this.getEntityPotentials(entitiesforPotentials);
       }
+
       console.log(potentials);
 
       optimizedJunctionTree.addPotentials(entity, potentials);
@@ -53,7 +56,7 @@ export default class Initializer {
 
     let entities: IEntity[] = [];
 
-    entityIDsForPotentials.forEach(entityID => {
+    entityIDsForPotentials.forEach((entityID) => {
       const entity = this.entityMap.get(entityID);
       if (entity) {
         entities.push(entity);
@@ -62,25 +65,25 @@ export default class Initializer {
 
     let entityStatePairs = this.getEntityStatePairs(entities);
 
-    entityStatePairs.forEach(esPair => {
+    entityStatePairs.forEach((esPair) => {
       let dif: DependancyContitions = {};
       let potential = 1;
 
-      esPair.forEach(es => {
+      esPair.forEach((es) => {
         const entity = es.entity;
         dif = {
           ...dif,
-          [entity.id]: es.state
+          [entity.id]: es.state,
         };
 
-        esPair.forEach(esd => {
+        esPair.forEach((esd) => {
           const depEntity = esd.entity;
           if (depEntity.id !== entity.id) {
             if (entity.deps?.includes(depEntity)) {
               const depEntityCPT = depEntity.cpt;
               if (depEntityCPT) {
                 let CPTprob = -1;
-                depEntityCPT.forEach(cptcondition => {
+                depEntityCPT.forEach((cptcondition) => {
                   if (
                     entity.id in cptcondition.if ||
                     Object.keys(cptcondition.if).length === 0
@@ -93,7 +96,7 @@ export default class Initializer {
 
                 potential *= CPTprob;
               } else {
-                console.log("CPT Not built Correctly");
+                throw new Error("CPT Not built Correctly");
               }
             }
           }
@@ -102,7 +105,7 @@ export default class Initializer {
 
       potentials.push({
         if: dif,
-        then: Math.abs(potential)
+        then: Math.abs(potential),
       });
     });
 
@@ -112,6 +115,7 @@ export default class Initializer {
   /**
    *
    * @param entityIDsForPotentials
+   * Used do create a set of all posible pairs of states, for all entity dependants
    *
    * Concept Concieved from https://www.geeksforgeeks.org/combinations-from-n-arrays-picking-one-element-from-each-array/
    */
@@ -131,7 +135,7 @@ export default class Initializer {
       for (let x = 0; x < n; x++) {
         const comb = {
           entity: entityIDsForPotentials[x],
-          state: entityIDsForPotentials[x].states[indices[x]]
+          state: entityIDsForPotentials[x].states[indices[x]],
         };
         pair.push(comb);
       }

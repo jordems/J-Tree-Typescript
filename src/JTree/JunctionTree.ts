@@ -1,15 +1,15 @@
-import BayesianNetwork from "../BayesianNetwork";
+import BayesianNetwork from "../BayesianNetwork/BayesianNetwork";
 
-import GraphicalTransformer from "./GraphicalTransformer";
-import Initializer from "./Initializer";
-import Forest from "../graphstructures/Forest";
-import { IClique, ISepSet, IEntity } from "../types";
-import Propagater from "./Propagater";
-import Marginalizer from "./Marginalizer";
+import GraphicalTransformer from "./lib/GraphicalTransformer";
+import Initializer from "./lib/Initializer";
+import Forest from "../GraphStructures/Forest";
+import { IClique, ISepSet, IEntity, IPotential } from "../types";
+import Propagater from "./lib/Propagater";
 
 export default class JunctionTree {
   private entityMap: Map<string, IEntity>;
-  private marginalizer: Marginalizer;
+  private consistentJunctionTree: Forest<IClique | ISepSet>;
+
   constructor(bnet: BayesianNetwork) {
     this.entityMap = bnet.getEntityMap();
 
@@ -20,10 +20,7 @@ export default class JunctionTree {
     const inconsistentJunctionTree = this.initialize(optimizedJunctionTree);
 
     // Propagation to create a Consistent Junction Tree
-    const consistentJunctionTree = this.propogate(inconsistentJunctionTree);
-
-    // Set up Marginalizer
-    this.marginalizer = new Marginalizer(consistentJunctionTree);
+    this.consistentJunctionTree = this.propogate(inconsistentJunctionTree);
   }
 
   private transform(bnet: BayesianNetwork): Forest<IClique | ISepSet> {
@@ -39,12 +36,11 @@ export default class JunctionTree {
   }
 
   private propogate(inconsistentJunctionTree: Forest<IClique | ISepSet>) {
-    const propagater = new Propagater(inconsistentJunctionTree, this.entityMap);
+    const propagater = new Propagater(inconsistentJunctionTree);
     return propagater.getConsistentJunctionTree();
   }
 
-  public marginalize(entity: IEntity) {
-    const margPotentials = this.marginalizer.marginalize(entity);
-    console.log(margPotentials);
+  public getConsistentJunctionTree(): Forest<IClique | ISepSet> {
+    return this.consistentJunctionTree;
   }
 }

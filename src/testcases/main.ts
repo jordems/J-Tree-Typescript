@@ -1,8 +1,9 @@
-import { IEntity } from "./types";
-import DagBuilder from "./DagBuilder";
-import BayesianNetwork from "./BayesianNetwork";
-import { CPTBuilder } from "./CPTBuilder";
-import JunctionTree from "./jtree/JunctionTree";
+import { IEntity } from "../types";
+import DagBuilder from "../BayesianNetwork/lib/DagBuilder";
+import BayesianNetwork from "../BayesianNetwork/BayesianNetwork";
+import { CPTBuilder } from "../BayesianNetwork/lib/CPTBuilder";
+import JunctionTree from "../jtree/JunctionTree";
+import Marginalizer from "../Marginalizer/Marginalizer";
 
 // Create all Test Entities
 let entityA: IEntity = { id: "A", states: ["on", "off"] };
@@ -26,35 +27,35 @@ entityG.deps = [entityH];
 entityA.cpt = [{ if: {}, then: { on: 0.5, off: 0.5 } }];
 entityB.cpt = [
   { if: { A: "on" }, then: { on: 0.5, off: 0.5 } },
-  { if: { A: "off" }, then: { on: 0.4, off: 0.6 } }
+  { if: { A: "off" }, then: { on: 0.4, off: 0.6 } },
 ];
 entityC.cpt = [
   { if: { A: "on" }, then: { on: 0.7, off: 0.3 } },
-  { if: { A: "off" }, then: { on: 0.2, off: 0.8 } }
+  { if: { A: "off" }, then: { on: 0.2, off: 0.8 } },
 ];
 entityD.cpt = [
   { if: { B: "on" }, then: { on: 0.9, off: 0.1 } },
-  { if: { B: "off" }, then: { on: 0.5, off: 0.5 } }
+  { if: { B: "off" }, then: { on: 0.5, off: 0.5 } },
 ];
 entityE.cpt = [
   { if: { C: "on" }, then: { on: 0.3, off: 0.7 } },
-  { if: { C: "off" }, then: { on: 0.6, off: 0.4 } }
+  { if: { C: "off" }, then: { on: 0.6, off: 0.4 } },
 ];
 entityF.cpt = [
   { if: { D: "on", E: "on" }, then: { on: 0.01, off: 0.99 } },
   { if: { D: "on", E: "off" }, then: { on: 0.01, off: 0.99 } },
   { if: { D: "off", E: "on" }, then: { on: 0.01, off: 0.99 } },
-  { if: { D: "off", E: "off" }, then: { on: 0.99, off: 0.01 } }
+  { if: { D: "off", E: "off" }, then: { on: 0.99, off: 0.01 } },
 ];
 entityG.cpt = [
   { if: { C: "on" }, then: { on: 0.8, off: 0.2 } },
-  { if: { C: "off" }, then: { on: 0.1, off: 0.9 } }
+  { if: { C: "off" }, then: { on: 0.1, off: 0.9 } },
 ];
 entityH.cpt = [
   { if: { G: "on", H: "on" }, then: { on: 0.05, off: 0.95 } },
   { if: { G: "on", H: "off" }, then: { on: 0.95, off: 0.05 } },
   { if: { G: "off", H: "on" }, then: { on: 0.95, off: 0.05 } },
-  { if: { G: "off", H: "off" }, then: { on: 0.95, off: 0.05 } }
+  { if: { G: "off", H: "off" }, then: { on: 0.95, off: 0.05 } },
 ];
 
 // Place Entities into entityMap
@@ -84,11 +85,6 @@ const bnet = new BayesianNetwork(entityMap, dag);
 
 const jtree = new JunctionTree(bnet);
 
-jtree.marginalize(entityA);
-jtree.marginalize(entityB);
-jtree.marginalize(entityC);
-jtree.marginalize(entityD);
-jtree.marginalize(entityE);
-jtree.marginalize(entityF);
-jtree.marginalize(entityG);
-jtree.marginalize(entityH);
+const marginalizer = new Marginalizer(jtree);
+
+console.log(marginalizer.marginalize(entityA));

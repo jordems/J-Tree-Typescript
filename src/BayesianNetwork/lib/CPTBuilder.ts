@@ -1,11 +1,15 @@
-import IEntity from "./types/IEntity";
-import { ICPT, DependancyContitions, StateProbabilities } from "./types/ICPT";
+import { IEntity } from "../../types";
+import {
+  ICPT,
+  DependancyContitions,
+  StateProbabilities,
+} from "../../types/ICPT";
 
 export class CPTBuilder {
   public buildCPTsForMap(entityMap: Map<string, IEntity>): void {
     const entityParentsMap = this.getParents(entityMap);
 
-    entityMap.forEach(entity => {
+    entityMap.forEach((entity) => {
       const entityParents = entityParentsMap[entity.id];
 
       const cpt = this.buildCPT(entity, entityParents);
@@ -30,19 +34,19 @@ export class CPTBuilder {
       for (var i = 0; i < singleDependant.states.length; i++) {
         // Build Dependancy Conditions
         const depConditions: DependancyContitions = {
-          [singleDependant.id]: singleDependant.states[i]
+          [singleDependant.id]: singleDependant.states[i],
         };
 
         // Build Inital State Probabilities
         let stateprobs: StateProbabilities = {};
-        entityStates.forEach(entityState => {
+        entityStates.forEach((entityState) => {
           stateprobs[entityState] = 1 / entityStates.length;
         });
 
         // Add CPTCondition to CPT
         CPT.push({
           if: depConditions,
-          then: stateprobs
+          then: stateprobs,
         });
       }
     } else if (entityParents && entityParents.length > 1) {
@@ -55,25 +59,25 @@ export class CPTBuilder {
       }
 
       // Build Base CPT
-      depPairs.forEach(depPair => {
+      depPairs.forEach((depPair) => {
         for (var i = 0; i < depPair[0].states.length; i++) {
           for (var j = 0; j < depPair[1].states.length; j++) {
             // Build Dependancy Conditions
             const depConditions: DependancyContitions = {
               [depPair[0].id]: depPair[0].states[i],
-              [depPair[1].id]: depPair[1].states[j]
+              [depPair[1].id]: depPair[1].states[j],
             };
 
             // Build Inital State Probabilities
             let stateprobs: StateProbabilities = {};
-            entityStates.forEach(entityState => {
+            entityStates.forEach((entityState) => {
               stateprobs[entityState] = 1 / entityStates.length;
             });
 
             // Add CPTCondition to CPT
             CPT.push({
               if: depConditions,
-              then: stateprobs
+              then: stateprobs,
             });
           }
         }
@@ -88,9 +92,9 @@ export class CPTBuilder {
   ): { [entityName: string]: IEntity[] } {
     const entityParents: { [entityName: string]: IEntity[] } = {};
 
-    entityMap.forEach(entity => {
+    entityMap.forEach((entity) => {
       if (entity.deps) {
-        entity.deps.forEach(depEntity => {
+        entity.deps.forEach((depEntity) => {
           if (!(depEntity.id in entityParents)) {
             entityParents[depEntity.id] = [];
           }

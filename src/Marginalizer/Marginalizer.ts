@@ -1,10 +1,11 @@
 import { IEntity, ISepSet, IClique, IPotential } from "../types";
-import Forest from "../graphstructures/Forest";
+import Forest from "../GraphStructures/Forest";
+import JunctionTree from "../jtree/JunctionTree";
 
 export default class Marginalizer {
   private consistentJunctionTree: Forest<IClique | ISepSet>;
-  constructor(consistentJunctionTree: Forest<IClique | ISepSet>) {
-    this.consistentJunctionTree = consistentJunctionTree;
+  constructor(jtree: JunctionTree) {
+    this.consistentJunctionTree = jtree.getConsistentJunctionTree();
   }
 
   public marginalize(entity: IEntity): IPotential[] {
@@ -14,9 +15,9 @@ export default class Marginalizer {
     const csofEntity = this.getClusterwithEntity(entity);
 
     let margPotentials: IPotential[] = [];
-    entity.states.forEach(state => {
+    entity.states.forEach((state) => {
       let pot = 0;
-      csofEntity.potentials?.forEach(tablepotential => {
+      csofEntity.potentials?.forEach((tablepotential) => {
         if (tablepotential.if[entity.id] === state) {
           pot += tablepotential.then;
         }
@@ -30,7 +31,7 @@ export default class Marginalizer {
 
   private getClusterwithEntity(entity: IEntity): IClique | ISepSet {
     let cluster: IClique | ISepSet | undefined;
-    this.consistentJunctionTree.getValues().forEach(graphEntity => {
+    this.consistentJunctionTree.getValues().forEach((graphEntity) => {
       const gentity = graphEntity.getEntity();
       if (!gentity.isSepSet) {
         if (gentity.entityIDs.includes(entity.id) && !cluster) {

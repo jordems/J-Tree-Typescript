@@ -1,4 +1,4 @@
-import GraphEntity from "./../graphstructures/GraphEntity";
+import GraphEntity from "../GraphStructures/lib/GraphEntity";
 
 export interface IGeneralGraph<T extends { id: string }> {
   set(entity: T): void;
