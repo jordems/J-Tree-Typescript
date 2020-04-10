@@ -420,7 +420,7 @@ export default class GraphicalTransformer {
     };
 
     let sepSetInsertCount = 0;
-    while (sepSetInsertCount <= cliques.length - 1) {
+    while (sepSetInsertCount < cliques.length - 1) {
       const sepSet = nextFromPetha(Petha, cliques, entityMap);
 
       const idxOfsepSet = Petha.indexOf(sepSet);
@@ -444,10 +444,10 @@ export default class GraphicalTransformer {
         console.log(`On Same Tree: ${cliqueX.id}:${cliqueY.id}`);
       }
 
-      // Repeat until n-1 sepsets have been inserted into the forest
-      if (sepSetInsertCount >= cliques.length - 1) {
-        break;
-      }
+      // // Repeat until n-1 sepsets have been inserted into the forest
+      // if (sepSetInsertCount >= cliques.length - 1) {
+      //   break;
+      // }
     }
     return cliqueForest;
   }

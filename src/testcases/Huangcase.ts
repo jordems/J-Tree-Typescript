@@ -77,14 +77,15 @@ const dag = dagBuilder.buildDag(entityMap);
 // Display Dag
 dag.displayMatrix();
 
-// IF CPT's Arn't given, this function will create Required CPT's that need to be filled (inital values sum to 1: ex: low, med, high = .3 .3 .3)
-//const cptBuilder = new CPTBuilder();
-//cptBuilder.buildCPTsForMap(entityMap);
-
 const bnet = new BayesianNetwork(entityMap, dag);
 
 const jtree = new JunctionTree(bnet);
 
 const marginalizer = new Marginalizer(jtree);
 
-console.log(marginalizer.marginalize(entityA));
+console.log("\n\n----Started Marginalization----\n");
+// Marginalize Each Entity to see marginalized values
+entityMap.forEach((entity, id) => {
+  console.log(`${id}:`, marginalizer.marginalize(entity));
+});
+console.log("\n----Finished Marginalization----\n");
