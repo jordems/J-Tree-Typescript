@@ -1,5 +1,5 @@
 import { IEntity } from "../../types";
-import DirectedGraph from "../../GraphStructures/DirectedGraph";
+import DirectedGraph from "../../GraphicalStructures/DirectedGraph";
 
 export default class DagBuilder {
   public buildDag(entityMap: Map<string, IEntity>): DirectedGraph<IEntity> {

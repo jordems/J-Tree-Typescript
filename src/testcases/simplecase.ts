@@ -1,7 +1,7 @@
 import { IEntity } from "../types";
 import DagBuilder from "../BayesianNetwork/lib/DagBuilder";
 import BayesianNetwork from "../BayesianNetwork/BayesianNetwork";
-import JunctionTree from "../JTree/JunctionTree";
+import JunctionTree from "../JunctionTree/JunctionTree";
 import Marginalizer from "../Marginalizer/Marginalizer";
 
 // Create all Test Entities

@@ -1,4 +1,4 @@
-import Forest from "../../GraphStructures/Forest";
+import Forest from "../../GraphicalStructures/Forest";
 import {
   IClique,
   ISepSet,

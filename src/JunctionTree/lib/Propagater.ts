@@ -1,6 +1,6 @@
 import { IEntity, ISepSet, IClique, IPotential } from "../../types";
-import Forest from "../../GraphStructures/Forest";
-import GraphEntity from "../../GraphStructures/lib/GraphEntity";
+import Forest from "../../GraphicalStructures/Forest";
+import GraphEntity from "../../GraphicalStructures/lib/GraphEntity";
 
 export default class Propagater {
   private consistentJunctionTree: Forest<IClique | ISepSet>;

@@ -1,6 +1,6 @@
 import { IEntity, ISepSet, IClique, IPotential } from "../types";
 import Forest from "../GraphicalStructures/Forest";
-import JunctionTree from "../JTree/JunctionTree";
+import JunctionTree from "../JunctionTree/JunctionTree";
 
 export default class Marginalizer {
   private consistentJunctionTree: Forest<IClique | ISepSet>;
