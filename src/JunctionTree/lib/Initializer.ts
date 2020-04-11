@@ -30,15 +30,14 @@ export default class Initializer {
       let potentials: IPotential[] = [];
 
       if (entity.isSepSet) {
+        console.log(`\nInitializing SepSet[${entity.intersectingentityIDs}]`);
         const entitiesforPotentials = entity.intersectingentityIDs;
-        potentials = this.getEntityPotentials(entitiesforPotentials);
+        potentials = this.getEntityPotentials(entitiesforPotentials, true);
       } else {
-        // Page 16 Get match potentalsACE with new CPT values
+        console.log(`\nInitializing Cluster[${entity.entityIDs}]`);
         const entitiesforPotentials = entity.entityIDs;
-        potentials = this.getEntityPotentials(entitiesforPotentials);
+        potentials = this.getEntityPotentials(entitiesforPotentials, false);
       }
-
-      console.log(potentials);
 
       optimizedJunctionTree.addPotentials(entity, potentials);
     });
@@ -51,7 +50,10 @@ export default class Initializer {
     return optimizedJunctionTree;
   }
 
-  private getEntityPotentials(entityIDsForPotentials: string[]): IPotential[] {
+  private getEntityPotentials(
+    entityIDsForPotentials: string[],
+    isSepSet: boolean
+  ): IPotential[] {
     let potentials: IPotential[] = [];
 
     let entities: IEntity[] = [];
@@ -65,47 +67,117 @@ export default class Initializer {
 
     let entityStatePairs = this.getEntityStatePairs(entities);
 
+    // Only parent elements will have cpt data
+    let parentEntities = this.getParents(entities);
+    //console.log("Parent entities", parentEntities);
+
     entityStatePairs.forEach((esPair) => {
       let dif: DependancyContitions = {};
       let potential = 1;
+      let propstring: string[] = [];
 
-      esPair.forEach((es) => {
-        const entity = es.entity;
-        dif = {
-          ...dif,
-          [entity.id]: es.state,
-        };
+      //FIX needs to be fore each depending entity like P(C|B AND S) currently P(C| B) and P(C | S)
+      if (!isSepSet) {
+        for (const parentKey of Object.keys(parentEntities)) {
+          const parentState = esPair.filter(
+            (esp) => esp.entity.id === parentKey
+          )[0].state;
+          const parentMatch = parentEntities[parentKey];
+          const parentEntity = this.entityMap.get(parentKey);
 
-        esPair.forEach((esd) => {
-          const depEntity = esd.entity;
-          if (depEntity.id !== entity.id) {
-            if (entity.deps?.includes(depEntity)) {
-              const depEntityCPT = depEntity.cpt;
-              if (depEntityCPT) {
-                let CPTprob = -1;
-                depEntityCPT.forEach((cptcondition) => {
-                  if (
-                    entity.id in cptcondition.if ||
-                    Object.keys(cptcondition.if).length === 0
-                  ) {
-                    if (cptcondition.if[entity.id] === es.state) {
-                      CPTprob = cptcondition.then[esd.state];
-                    }
-                  }
-                });
+          if (!parentEntity || !parentEntity.cpt) {
+            throw new Error("Parent assigned that doesn't exist");
+          }
 
-                potential *= CPTprob;
-              } else {
-                throw new Error("CPT Not built Correctly");
+          dif = {
+            ...dif,
+            [parentEntity.id]: parentState,
+          };
+
+          let Pparams: {
+            entity: IEntity;
+            state: string;
+          }[] = [];
+          // add
+          for (const child of parentMatch) {
+            const cPair = esPair.filter((esp) => esp.entity.id === child.id);
+            if (cPair.length > 0) {
+              Pparams.push(cPair[0]);
+              dif = {
+                ...dif,
+                [child.id]: cPair[0].state,
+              };
+            }
+          }
+
+          // This means the match has been found and we can now multiply the potential
+          if (Pparams.length === parentMatch.length) {
+            const parentCPT = parentEntity.cpt;
+
+            for (const cptLayer of parentCPT) {
+              let isMatch = true;
+              let pMatchstring = "";
+              for (const depent of Object.keys(cptLayer.if)) {
+                const param = Pparams.filter(
+                  (ppam) => ppam.entity.id === depent
+                );
+                if (
+                  param.length === 0 ||
+                  cptLayer.if[depent] !== param[0].state
+                ) {
+                  isMatch = false;
+                } else {
+                  pMatchstring += `${depent}=${param[0].state},`;
+                }
+              }
+              if (isMatch) {
+                propstring.push(
+                  `P(${parentEntity.id}=${parentState}|${pMatchstring})`
+                );
+                potential *= cptLayer.then[parentState];
               }
             }
           }
+        }
+        if (potential === 1) {
+          let printString = "P(";
+          esPair.forEach((esp) => {
+            printString += `${esp.entity.id}=${esp.state},`;
+            dif = {
+              ...dif,
+              [esp.entity.id]: esp.state,
+            };
+          });
+          propstring.push(printString + ")");
+        }
+      } else {
+        let printString = "P(";
+        esPair.forEach((esp) => {
+          printString += `${esp.entity.id}=${esp.state},`;
+          dif = {
+            ...dif,
+            [esp.entity.id]: esp.state,
+          };
         });
-      });
+        propstring.push(printString + ")");
+      }
+
+      // Printing Proability Values to check Manually
+      if (propstring.length > 1) {
+        let propPrintString = "";
+        for (let x = 0; x < propstring.length - 1; x++) {
+          propPrintString += propstring[x] + " x ";
+        }
+        propPrintString +=
+          propstring[propstring.length - 1] + " = " + potential;
+        console.log(propPrintString);
+      } else if (propstring.length === 1) {
+        console.log(propstring[0] + " = " + potential);
+      }
 
       potentials.push({
         if: dif,
-        then: Math.abs(potential),
+        then: potential,
       });
     });
 
@@ -167,6 +239,30 @@ export default class Initializer {
       }
     }
     return combinations;
+  }
+
+  /**
+   * Gets parent elements of id's
+   * @param entityMap
+   */
+  private getParents(
+    entitiesList: IEntity[]
+  ): { [entityName: string]: IEntity[] } {
+    const entityParents: { [entityName: string]: IEntity[] } = {};
+
+    this.entityMap.forEach((entity) => {
+      if (entity.deps) {
+        entity.deps.forEach((depEntity) => {
+          if (entitiesList.includes(depEntity)) {
+            if (!(depEntity.id in entityParents)) {
+              entityParents[depEntity.id] = [];
+            }
+            entityParents[depEntity.id].push(entity);
+          }
+        });
+      }
+    });
+    return entityParents;
   }
 
   public getInconsistentJunctionTree() {

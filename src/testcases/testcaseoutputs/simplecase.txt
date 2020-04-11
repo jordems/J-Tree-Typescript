@@ -1,0 +1,98 @@
+PS D:\Documents\4th Year\SEM 2\COSC 419C\Project> npm run simplecase
+
+> jtree-typescript@1.0.0 simplecase D:\Documents\4th Year\SEM 2\COSC 419C\Project
+> ts-node src/testcases/simplecase.ts
+
+
+
+----Directed Acyclic Graph----
+
+Displaying Graph Matrix
+  B S C 
+B 0 0 1 
+S 0 0 1 
+C 0 0 0 
+
+
+
+----Moral Graph----
+
+Displaying Graph Matrix
+  B S C 
+B 0 1 1 
+S 1 0 1 
+C 1 1 0 
+
+
+
+--Starting Graphical Triangulation--
+
+Triangulation Removeing idx S
+Triangulation Removeing idx C
+Triangulation Removeing idx B
+
+--Triangulated Graph--
+Displaying Graph Matrix
+  B S C 
+B 0 1 1
+S 1 0 1
+C 1 1 0
+
+Found InducedClusters:
+Cluster[S,C,B]
+Cluster[C,B]
+Cluster[B]
+
+Found Cliques:
+Cluster[S,C,B]
+
+--Finished Graphical Triangulation--
+
+
+
+--Starting J Tree Optimization--
+
+
+--Forest Printout--
+Cluster[S,C,B] HAS Edges:
+
+
+--Finished J Tree Optimization--
+
+
+----Started Initialization----
+
+
+Initializing Cluster[S,C,B]
+P(C=false|B=false,S=false,) x P(S=false,C=false,B=false,) = 1
+P(C=false|B=true,S=false,) = 0
+P(C=true|B=false,S=false,) = 0
+P(C=true|B=true,S=false,) x P(S=false,C=true,B=true,) = 1
+P(C=false|B=false,S=true,) = 0
+P(C=false|B=true,S=true,) = 0
+P(C=true|B=false,S=true,) x P(S=true,C=true,B=false,) = 1
+P(C=true|B=true,S=true,) x P(S=true,C=true,B=true,) = 1
+
+----Finished Initialization----
+
+
+----Started Propagation----
+
+Chose arbitrary cluster:  SCB
+collectEvidence: SCB
+distrubute Evidence: SCB
+
+----Finished Propagation----
+
+
+
+----Started Marginalization----
+
+B: [ { if: { B: 'false' }, then: 0.5 }, { if: { B: 'true' }, then: 0.5 } ]
+S: [ { if: { S: 'false' }, then: 0.5 }, { if: { S: 'true' }, then: 0.5 } ]
+C: [
+  { if: { C: 'false' }, then: 0.25 },
+  { if: { C: 'true' }, then: 0.75 }
+]
+
+----Finished Marginalization----

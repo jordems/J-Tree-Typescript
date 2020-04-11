@@ -1,0 +1,169 @@
+PS D:\Documents\4th Year\SEM 2\COSC 419C\Project> npm run A4case    
+
+> jtree-typescript@1.0.0 A4case D:\Documents\4th Year\SEM 2\COSC 419C\Project
+> ts-node src/testcases/A4case.ts
+
+
+
+----Directed Acyclic Graph----
+
+Displaying Graph Matrix
+  Difficulty Accuracy TaskTime NeedHelp DisplayTime
+Difficulty 0 1 1 0 0
+Accuracy 0 0 0 1 0
+TaskTime 0 0 0 1 0
+NeedHelp 0 0 0 0 1
+DisplayTime 0 0 0 0 0
+
+
+
+----Moral Graph----
+
+Displaying Graph Matrix
+  Difficulty Accuracy TaskTime NeedHelp DisplayTime
+Difficulty 0 1 1 0 0
+Accuracy 1 0 1 1 0
+TaskTime 1 1 0 1 0
+NeedHelp 0 1 1 0 1
+DisplayTime 0 0 0 1 0
+
+
+
+--Starting Graphical Triangulation--
+
+Triangulation Removeing idx Difficulty
+Triangulation Removeing idx DisplayTime
+Triangulation Removeing idx NeedHelp
+Triangulation Removeing idx TaskTime
+Triangulation Removeing idx Accuracy
+
+--Triangulated Graph--
+Displaying Graph Matrix
+  Difficulty Accuracy TaskTime NeedHelp DisplayTime
+Difficulty 0 1 1 0 0
+Accuracy 1 0 1 1 0
+TaskTime 1 1 0 1 0
+NeedHelp 0 1 1 0 1
+DisplayTime 0 0 0 1 0
+
+Found InducedClusters:
+Cluster[Difficulty,Accuracy,TaskTime]
+Cluster[DisplayTime,NeedHelp]
+Cluster[NeedHelp,Accuracy,TaskTime]
+Cluster[TaskTime,Accuracy]
+Cluster[Accuracy]
+
+Found Cliques:
+Cluster[Difficulty,Accuracy,TaskTime]
+Cluster[DisplayTime,NeedHelp]
+Cluster[NeedHelp,Accuracy,TaskTime]
+
+--Finished Graphical Triangulation--
+
+
+
+--Starting J Tree Optimization--
+
+Inserting Sepset[Accuracy,TaskTime] BETWEEN Cluster[Difficulty,Accuracy,TaskTime] and Cluster[NeedHelp,Accuracy,TaskTime]
+Inserting Sepset[NeedHelp] BETWEEN Cluster[DisplayTime,NeedHelp] and Cluster[NeedHelp,Accuracy,TaskTime]
+
+--Forest Printout--
+Cluster[Difficulty,Accuracy,TaskTime] HAS Edges: SepSet[Accuracy,TaskTime]
+Cluster[DisplayTime,NeedHelp] HAS Edges: SepSet[NeedHelp]
+Cluster[NeedHelp,Accuracy,TaskTime] HAS Edges: SepSet[Accuracy,TaskTime],SepSet[NeedHelp]
+SepSet[Accuracy,TaskTime] HAS Edges: Cluster[Difficulty,Accuracy,TaskTime],Cluster[NeedHelp,Accuracy,TaskTime]
+SepSet[NeedHelp] HAS Edges: Cluster[DisplayTime,NeedHelp],Cluster[NeedHelp,Accuracy,TaskTime]
+
+
+--Finished J Tree Optimization--
+
+
+----Started Initialization----
+
+
+Initializing Cluster[Difficulty,Accuracy,TaskTime]
+P(Accuracy=wrong|Difficulty=easy,) x P(TaskTime=slow|Difficulty=easy,) = 0.0148
+P(Accuracy=wrong|Difficulty=easy,) x P(TaskTime=fast|Difficulty=easy,) = 0.0252
+P(Accuracy=right|Difficulty=easy,) x P(TaskTime=slow|Difficulty=easy,) = 0.35519999999999996
+P(Accuracy=right|Difficulty=easy,) x P(TaskTime=fast|Difficulty=easy,) = 0.6048
+P(Accuracy=wrong|Difficulty=hard,) x P(TaskTime=slow|Difficulty=hard,) = 0.044000000000000004
+P(Accuracy=wrong|Difficulty=hard,) x P(TaskTime=fast|Difficulty=hard,) = 0.066
+P(Accuracy=right|Difficulty=hard,) x P(TaskTime=slow|Difficulty=hard,) = 0.35600000000000004
+P(Accuracy=right|Difficulty=hard,) x P(TaskTime=fast|Difficulty=hard,) = 0.534
+
+Initializing Cluster[DisplayTime,NeedHelp]
+P(DisplayTime=short|NeedHelp=false,) = 0.75
+P(DisplayTime=short|NeedHelp=true,) = 0.2
+P(DisplayTime=average|NeedHelp=false,) = 0.2
+P(DisplayTime=average|NeedHelp=true,) = 0.5
+P(DisplayTime=long|NeedHelp=false,) = 0.05
+P(DisplayTime=long|NeedHelp=true,) = 3
+
+Initializing Cluster[NeedHelp,Accuracy,TaskTime]
+P(NeedHelp=false|Accuracy=wrong,TaskTime=slow,) = 0.2
+P(NeedHelp=false|Accuracy=wrong,TaskTime=fast,) = 0.4
+P(NeedHelp=false|Accuracy=right,TaskTime=slow,) = 0.7
+P(NeedHelp=false|Accuracy=right,TaskTime=fast,) = 0.05
+P(NeedHelp=true|Accuracy=wrong,TaskTime=slow,) = 0.8
+P(NeedHelp=true|Accuracy=wrong,TaskTime=fast,) = 0.6
+P(NeedHelp=true|Accuracy=right,TaskTime=slow,) = 0.3
+P(NeedHelp=true|Accuracy=right,TaskTime=fast,) = 0.95
+
+Initializing SepSet[Accuracy,TaskTime]
+P(Accuracy=wrong,TaskTime=slow,) = 1
+P(Accuracy=wrong,TaskTime=fast,) = 1
+P(Accuracy=right,TaskTime=slow,) = 1
+P(Accuracy=right,TaskTime=fast,) = 1
+
+Initializing SepSet[NeedHelp]
+P(NeedHelp=false,) = 1
+P(NeedHelp=true,) = 1
+
+----Finished Initialization----
+
+
+----Started Propagation----
+
+Chose arbitrary cluster:  DisplayTimeNeedHelp
+collectEvidence: DisplayTimeNeedHelp
+collectEvidence: NeedHelpAccuracyTaskTime
+collectEvidence: DifficultyAccuracyTaskTime
+Passing Message: NeedHelpAccuracyTaskTime - [Accuracy,TaskTime] - DifficultyAccuracyTaskTime
+Passing Message: DisplayTimeNeedHelp - [NeedHelp] - NeedHelpAccuracyTaskTime
+distrubute Evidence: DisplayTimeNeedHelp
+Passing Message: DisplayTimeNeedHelp - [NeedHelp] - NeedHelpAccuracyTaskTime
+distrubute Evidence: NeedHelpAccuracyTaskTime
+Passing Message: NeedHelpAccuracyTaskTime - [Accuracy,TaskTime] - DifficultyAccuracyTaskTime
+distrubute Evidence: DifficultyAccuracyTaskTime
+
+----Finished Propagation----
+
+
+
+----Started Marginalization----
+
+Difficulty: [
+  { if: { Difficulty: 'easy' }, then: 0.5 },
+  { if: { Difficulty: 'hard' }, then: 0.5 }
+]
+Accuracy: [
+  { if: { Accuracy: 'wrong' }, then: 0.07500000000000001 },
+  { if: { Accuracy: 'right' }, then: 0.925 }
+]
+TaskTime: [
+  { if: { TaskTime: 'slow' }, then: 0.385 },
+  { if: { TaskTime: 'fast' }, then: 0.615 }
+]
+NeedHelp: [
+  { if: { NeedHelp: 'false' }, then: 0.21276595744680848 },
+  { if: { NeedHelp: 'true' }, then: 0.7872340425531914 }
+]
+DisplayTime: [
+  { if: { DisplayTime: 'short' }, then: 0.20212765957446807 },
+  { if: { DisplayTime: 'average' }, then: 0.14893617021276595 },
+  { if: { DisplayTime: 'long' }, then: 0.6489361702127658 }
+]
+
+----Finished Marginalization----
+
+PS D:\Documents\4th Year\SEM 2\COSC 419C\Project>

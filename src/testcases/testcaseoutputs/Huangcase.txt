@@ -1,0 +1,255 @@
+PS D:\Documents\4th Year\SEM 2\COSC 419C\Project> npm run Huangcase 
+
+> jtree-typescript@1.0.0 Huangcase D:\Documents\4th Year\SEM 2\COSC 419C\Project
+> ts-node src/testcases/Huangcase.ts
+
+Displaying Graph Matrix
+  A B C D E F G H 
+A 0 1 1 0 0 0 0 0
+B 0 0 0 1 0 0 0 0
+C 0 0 0 0 1 0 1 0
+D 0 0 0 0 0 1 0 0
+E 0 0 0 0 0 1 0 1
+F 0 0 0 0 0 0 0 0
+G 0 0 0 0 0 0 0 1
+H 0 0 0 0 0 0 0 0
+
+
+
+----Moral Graph----
+
+Displaying Graph Matrix
+  A B C D E F G H
+A 0 1 1 0 0 0 0 0
+B 1 0 0 1 0 0 0 0
+C 1 0 0 0 1 0 1 0
+D 0 1 0 0 1 1 0 0
+E 0 0 1 1 0 1 1 1
+F 0 0 0 1 1 0 0 0
+G 0 0 1 0 1 0 0 1
+H 0 0 0 0 1 0 1 0
+
+
+
+--Starting Graphical Triangulation--
+
+Triangulation Removeing idx H
+Triangulation Removeing idx G
+Triangulation Removeing idx F
+Triangulation Removeing idx C
+Triangulation Removeing idx B
+Triangulation Removeing idx E
+Triangulation Removeing idx D
+Triangulation Removeing idx A
+
+--Triangulated Graph--
+Displaying Graph Matrix
+  A B C D E F G H
+A 0 1 1 1 1 0 0 0
+B 1 0 0 1 0 0 0 0
+C 1 0 0 0 1 0 1 0
+D 1 1 0 0 1 1 0 0
+E 1 0 1 1 0 1 1 1
+F 0 0 0 1 1 0 0 0
+G 0 0 1 0 1 0 0 1
+H 0 0 0 0 1 0 1 0
+
+Found InducedClusters:
+Cluster[H,E,G]
+Cluster[G,C,E]
+Cluster[F,D,E]
+Cluster[C,A,E]
+Cluster[B,A,D]
+Cluster[E,D,A]
+Cluster[D,A]
+Cluster[A]
+
+Found Cliques:
+Cluster[H,E,G]
+Cluster[G,C,E]
+Cluster[F,D,E]
+Cluster[C,A,E]
+Cluster[B,A,D]
+Cluster[E,D,A]
+
+--Finished Graphical Triangulation--
+
+
+
+--Starting J Tree Optimization--
+
+Inserting Sepset[D,A] BETWEEN Cluster[B,A,D] and Cluster[E,D,A]
+Inserting Sepset[E,A] BETWEEN Cluster[C,A,E] and Cluster[E,D,A]
+Inserting Sepset[E,D] BETWEEN Cluster[F,D,E] and Cluster[E,D,A]
+Inserting Sepset[C,E] BETWEEN Cluster[G,C,E] and Cluster[C,A,E]
+Inserting Sepset[G,E] BETWEEN Cluster[H,E,G] and Cluster[G,C,E]
+
+--Forest Printout--
+Cluster[H,E,G] HAS Edges: SepSet[G,E]
+Cluster[G,C,E] HAS Edges: SepSet[C,E],SepSet[G,E]
+Cluster[F,D,E] HAS Edges: SepSet[E,D]
+Cluster[C,A,E] HAS Edges: SepSet[E,A],SepSet[C,E]
+Cluster[B,A,D] HAS Edges: SepSet[D,A]
+Cluster[E,D,A] HAS Edges: SepSet[D,A],SepSet[E,A],SepSet[E,D]
+SepSet[D,A] HAS Edges: Cluster[B,A,D],Cluster[E,D,A]
+SepSet[E,A] HAS Edges: Cluster[C,A,E],Cluster[E,D,A]
+SepSet[E,D] HAS Edges: Cluster[F,D,E],Cluster[E,D,A]
+SepSet[C,E] HAS Edges: Cluster[G,C,E],Cluster[C,A,E]
+SepSet[G,E] HAS Edges: Cluster[H,E,G],Cluster[G,C,E]
+
+
+--Finished J Tree Optimization--
+
+
+----Started Initialization----
+
+
+Initializing Cluster[H,E,G]
+P(H=on,E=on,G=on,) = 1
+P(H=on,E=on,G=off,) = 1
+P(H=on,E=off,G=on,) = 1
+P(H=on,E=off,G=off,) = 1
+P(H=off,E=on,G=on,) = 1
+P(H=off,E=on,G=off,) = 1
+P(H=off,E=off,G=on,) = 1
+P(H=off,E=off,G=off,) = 1
+
+Initializing Cluster[G,C,E]
+P(E=on|C=on,) x P(G=on|C=on,) = 0.24
+P(E=off|C=on,) x P(G=on|C=on,) = 0.5599999999999999
+P(E=on|C=off,) x P(G=on|C=off,) = 0.06
+P(E=off|C=off,) x P(G=on|C=off,) = 0.04000000000000001
+P(E=on|C=on,) x P(G=off|C=on,) = 0.06
+P(E=off|C=on,) x P(G=off|C=on,) = 0.13999999999999999
+P(E=on|C=off,) x P(G=off|C=off,) = 0.54
+P(E=off|C=off,) x P(G=off|C=off,) = 0.36000000000000004
+
+Initializing Cluster[F,D,E]
+P(F=on|D=on,E=on,) = 0.01
+P(F=on|D=on,E=off,) = 0.01
+P(F=on|D=off,E=on,) = 0.01
+P(F=on|D=off,E=off,) = 0.99
+P(F=off|D=on,E=on,) = 0.99
+P(F=off|D=on,E=off,) = 0.99
+P(F=off|D=off,E=on,) = 0.99
+P(F=off|D=off,E=off,) = 0.01
+
+Initializing Cluster[C,A,E]
+P(C=on|A=on,) x P(E=on|C=on,) = 0.21
+P(C=on|A=on,) x P(E=off|C=on,) = 0.48999999999999994
+P(C=on|A=off,) x P(E=on|C=on,) = 0.06
+P(C=on|A=off,) x P(E=off|C=on,) = 0.13999999999999999
+P(C=off|A=on,) x P(E=on|C=off,) = 0.18
+P(C=off|A=on,) x P(E=off|C=off,) = 0.12
+P(C=off|A=off,) x P(E=on|C=off,) = 0.48
+P(C=off|A=off,) x P(E=off|C=off,) = 0.32000000000000006
+
+Initializing Cluster[B,A,D]
+P(B=on|A=on,) x P(D=on|B=on,) = 0.45
+P(B=on|A=on,) x P(D=off|B=on,) = 0.05
+P(B=on|A=off,) x P(D=on|B=on,) = 0.36000000000000004
+P(B=on|A=off,) x P(D=off|B=on,) = 0.04000000000000001
+P(B=off|A=on,) x P(D=on|B=off,) = 0.25
+P(B=off|A=on,) x P(D=off|B=off,) = 0.25
+P(B=off|A=off,) x P(D=on|B=off,) = 0.3
+P(B=off|A=off,) x P(D=off|B=off,) = 0.3
+
+Initializing Cluster[E,D,A]
+P(E=on,D=on,A=on,) = 1
+P(E=on,D=on,A=off,) = 1
+P(E=on,D=off,A=on,) = 1
+P(E=on,D=off,A=off,) = 1
+P(E=off,D=on,A=on,) = 1
+P(E=off,D=on,A=off,) = 1
+P(E=off,D=off,A=on,) = 1
+P(E=off,D=off,A=off,) = 1
+
+Initializing SepSet[D,A]
+P(D=on,A=on,) = 1
+P(D=on,A=off,) = 1
+P(D=off,A=on,) = 1
+P(D=off,A=off,) = 1
+
+Initializing SepSet[E,A]
+P(E=on,A=on,) = 1
+P(E=on,A=off,) = 1
+P(E=off,A=on,) = 1
+P(E=off,A=off,) = 1
+
+Initializing SepSet[E,D]
+P(E=on,D=on,) = 1
+P(E=on,D=off,) = 1
+P(E=off,D=on,) = 1
+P(E=off,D=off,) = 1
+
+Initializing SepSet[C,E]
+P(C=on,E=on,) = 1
+P(C=on,E=off,) = 1
+P(C=off,E=on,) = 1
+P(C=off,E=off,) = 1
+
+Initializing SepSet[G,E]
+P(G=on,E=on,) = 1
+P(G=on,E=off,) = 1
+P(G=off,E=on,) = 1
+P(G=off,E=off,) = 1
+
+----Finished Initialization----
+
+
+----Started Propagation----
+
+Chose arbitrary cluster:  GCE
+collectEvidence: GCE
+collectEvidence: CAE
+collectEvidence: EDA
+collectEvidence: BAD
+Passing Message: EDA - [D,A] - BAD
+collectEvidence: FDE
+Passing Message: EDA - [E,D] - FDE
+Passing Message: CAE - [E,A] - EDA
+Passing Message: GCE - [C,E] - CAE
+collectEvidence: HEG
+Passing Message: GCE - [G,E] - HEG
+distrubute Evidence: GCE
+Passing Message: GCE - [C,E] - CAE
+distrubute Evidence: CAE
+Passing Message: CAE - [E,A] - EDA
+distrubute Evidence: EDA
+Passing Message: EDA - [D,A] - BAD
+distrubute Evidence: BAD
+Passing Message: EDA - [E,D] - FDE
+distrubute Evidence: FDE
+Passing Message: GCE - [G,E] - HEG
+distrubute Evidence: HEG
+
+----Finished Propagation----
+
+
+
+----Started Marginalization----
+
+A: [
+  { if: { A: 'on' }, then: 0.49999999999999994 },
+  { if: { A: 'off' }, then: 0.5 }
+]
+B: [
+  { if: { B: 'on' }, then: 0.45000000000000007 },
+  { if: { B: 'off' }, then: 0.55 }
+]
+C: [
+  { if: { C: 'on' }, then: 0.49999999999999994 },
+  { if: { C: 'off' }, then: 0.5 }
+]
+D: [ { if: { D: 'on' }, then: 0.5 }, { if: { D: 'off' }, then: 0.5 } ]
+E: [ { if: { E: 'on' }, then: 0.5 }, { if: { E: 'off' }, then: 0.5 } ]
+F: [
+  { if: { F: 'on' }, then: 0.255 },
+  { if: { F: 'off' }, then: 0.7449999999999999 }
+]
+G: [ { if: { G: 'on' }, then: 0.5 }, { if: { G: 'off' }, then: 0.5 } ]
+H: [ { if: { H: 'on' }, then: 0.5 }, { if: { H: 'off' }, then: 0.5 } ]
+
+----Finished Marginalization----
+
+PS D:\Documents\4th Year\SEM 2\COSC 419C\Project>

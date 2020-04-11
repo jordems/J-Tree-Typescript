@@ -4,7 +4,7 @@ import BayesianNetwork from "../BayesianNetwork/BayesianNetwork";
 import JunctionTree from "../JunctionTree/JunctionTree";
 import Marginalizer from "../Marginalizer/Marginalizer";
 
-// Create all Test Entities
+// Create all Entities
 let B: IEntity = { id: "B", states: ["false", "true"] };
 let S: IEntity = { id: "S", states: ["false", "true"] };
 let C: IEntity = { id: "C", states: ["false", "true"] };

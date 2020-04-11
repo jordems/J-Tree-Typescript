@@ -32,7 +32,10 @@ export default class Propagater {
 
     this.normalize(inconsistentJunctionTree);
 
-    //console.log("consistentJTRee", inconsistentJunctionTree.toString());
+    // console.log("consistentJTRee");
+    // inconsistentJunctionTree.getValues().forEach((gent) => {
+    //   console.log(gent.toString());
+    // });
 
     return inconsistentJunctionTree;
   }
