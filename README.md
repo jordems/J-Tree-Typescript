@@ -4,7 +4,7 @@
 
 ##### By Jordan Emslie | 20600152
 
-[Video Running Through Test Cases](/)
+[Video Running Through Test Cases](https://drive.google.com/file/d/1n_4oQqi2IWnhxmfSb_UwsssbGQ0--9HJ/view?usp=sharing)
 
 ### Installation/Run Process
 
