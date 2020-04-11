@@ -8,10 +8,22 @@
 
 ### Installation/Run Process
 
+_NOTE: All testcases have cmd logs in [src/testcases/testcaseoutputs](src/testcases/testcaseoutputs)_
+
 _Requires node at least v12.10.0 [NODEJS](https://nodejs.org/en/)_
 
-```
+```js
+// In base Directory
+// Install Packages from npm
 $ npm i
+
+// Install Typescript (if not already installed)
+$ npm install -g typescript
+
+// Each Test Case
+$ npm run simplecase
+$ npm run A4case
+$ npm run Huangcase
 ```
 
 ### Introduction
@@ -22,7 +34,7 @@ In this document I will display a basic overview of my Junction Tree Inference A
 
 _Throughout the step by step guide we are following the [src/testcases/simplecase.ts](src/testcases/simplecase.ts) test case_
 
-1.  **Creating Entities, Dependancies, and CPTs**
+1.  **Creating Entities, Dependencies, and CPTs**
     I Attempt to make this as understandable as possible. Although I was required to add an entityMap that would require me to have access to all entities by ID at once.
 
     [src/testcases/simplecase.ts](src/testcases/simplecase.ts)
@@ -116,7 +128,7 @@ _Throughout the step by step guide we are following the [src/testcases/simplecas
      }
     ```
 
-    i. **Graphical Tranformation**
+    i. **Graphical Transformation**
     Within the Graphical Transformation Step, our goal is to create the Optimized Junction Tree, however todo so we must first generate a moral graph with the bayes net's DAG, build the triangulated graph to find the induced clusters and cliques. Finally, with the cliques we can build the Optimized Junction Tree.
 
     [src/JunctionTree/lib/GraphicalTransformer.ts](src/JunctionTree/lib/GraphicalTransformer.ts)
